@@ -1,0 +1,375 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ClubRole {
+  ADMIN
+  MEMBER
+}
+
+enum TransactionType {
+  EXPENSE
+  INCOME
+}
+
+enum ExpenseCategory {
+  COURT_RENTAL
+  SHUTTLE_PURCHASE
+  WATER
+  PARKING
+  OPTION
+}
+
+enum IncomeCategory {
+  FUND_CONTRIBUTION
+  OPTIONAL
+}
+
+enum CourtType {
+  FIXED
+  FLEXIBLE
+}
+
+enum MemberRank {
+  S
+  A
+  B
+  C
+  D
+}
+
+model User {
+  id            String            @id @default(cuid())
+  name          String?
+  email         String            @unique
+  emailVerified DateTime?
+  passwordHash  String?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  memberships   ClubMembership[]
+  createdClubs  Club[]            @relation("ClubCreator")
+  createdInvites ClubInvite[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Club {
+  id           String           @id @default(cuid())
+  name         String
+  slug         String           @unique
+  createdById  String
+  createdBy    User             @relation("ClubCreator", fields: [createdById], references: [id])
+  memberships  ClubMembership[]
+  invites      ClubInvite[]
+  settings     ClubSettings?
+  shuttleTypes ShuttleType[]
+  members      Member[]
+  playSessions PlaySession[]
+  transactions Transaction[]
+  tournaments  Tournament[]
+  parties      Party[]
+  sessionSchedules SessionSchedule[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+model ClubMembership {
+  id        String   @id @default(cuid())
+  clubId    String
+  userId    String
+  role      ClubRole @default(MEMBER)
+  memberId  String?  @unique
+  club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  member    Member?  @relation(fields: [memberId], references: [id])
+  joinedAt  DateTime @default(now())
+
+  @@unique([clubId, userId])
+  @@index([userId])
+}
+
+model ClubInvite {
+  id          String    @id @default(cuid())
+  clubId      String
+  token       String    @unique
+  createdById String
+  expiresAt   DateTime?
+  maxUses     Int?
+  useCount    Int       @default(0)
+  club        Club      @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  createdBy   User      @relation(fields: [createdById], references: [id])
+  createdAt   DateTime  @default(now())
+
+  @@index([token])
+}
+
+model ClubSettings {
+  id     String @id @default(cuid())
+  clubId String @unique
+  club   Club   @relation(fields: [clubId], references: [id], onDelete: Cascade)
+}
+
+model ShuttleType {
+  id               String        @id @default(cuid())
+  clubId           String
+  name             String
+  pricePerBlock    Int
+  shuttlesPerBlock Int           @default(12)
+  inventory        Int           @default(0)
+  sortOrder        Int           @default(0)
+  club             Club          @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  playSessions     PlaySession[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([clubId])
+}
+
+model Member {
+  id                String              @id @default(cuid())
+  clubId            String
+  name              String
+  rank              MemberRank?
+  aliases           String[]            @default([])
+  club              Club                @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  membership        ClubMembership?
+  sessionShares     SessionShare[]
+  hostedSessionGuests SessionGuest[] @relation("SessionGuestHost")
+  transactions      Transaction[]
+  tournamentGroupA  TournamentBracket[] @relation("GroupA")
+  tournamentGroupB  TournamentBracket[] @relation("GroupB")
+  tournamentMembers TournamentMember[]
+  tournamentExpensesPaid TournamentExpense[] @relation("ExpensePaidBy")
+  partyMembers      PartyMember[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@unique([clubId, name])
+  @@index([clubId])
+}
+
+model SessionSchedule {
+  id               String        @id @default(cuid())
+  clubId           String
+  startTime        String
+  endTime          String
+  weekdays         Int[]
+  courtType        CourtType     @default(FIXED)
+  courtRental      Int           @default(0)
+  address          String?
+  googleAddressUrl String?
+  enabled          Boolean       @default(true)
+  club             Club          @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  sessions         PlaySession[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([clubId])
+}
+
+model PlaySession {
+  id               String           @id @default(cuid())
+  clubId           String
+  date             DateTime
+  courtType        CourtType?
+  scheduleId       String?
+  schedule         SessionSchedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+  shuttleTypeId    String?
+  shuttleType      ShuttleType?     @relation(fields: [shuttleTypeId], references: [id], onDelete: SetNull)
+  shuttlesUsed     Int              @default(0)
+  courtRental      Int              @default(0)
+  water            Int              @default(0)
+  parking          Int              @default(0)
+  totalCost        Int              @default(0)
+  costPerPerson    Int              @default(0)
+  address          String?
+  googleAddressUrl String?
+  note             String?
+  shares        SessionShare[]
+  guests        SessionGuest[]
+  club          Club           @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  deletedAt     DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([clubId, date])
+  @@index([scheduleId])
+}
+
+model SessionShare {
+  id                  String      @id @default(cuid())
+  sessionId           String
+  memberId            String
+  amount              Int         @default(0)
+  water               Int         @default(0)
+  parking             Int         @default(0)
+  extra               Int         @default(0)
+  extraNote           String?
+  memberPaysForGuests Boolean     @default(false)
+  session             PlaySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  member              Member      @relation(fields: [memberId], references: [id])
+
+  @@unique([sessionId, memberId])
+}
+
+model SessionGuest {
+  id               String      @id @default(cuid())
+  sessionId        String
+  name             String
+  amount           Int         @default(0)
+  water            Int         @default(0)
+  parking          Int         @default(0)
+  extra            Int         @default(0)
+  extraNote        String?
+  hostedByMemberId String?
+  session          PlaySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  hostedBy         Member?     @relation("SessionGuestHost", fields: [hostedByMemberId], references: [id])
+
+  @@index([sessionId])
+  @@index([hostedByMemberId])
+}
+
+model Transaction {
+  id          String          @id @default(cuid())
+  clubId      String
+  type        TransactionType
+  date        DateTime?
+  amount      Int
+  category    String
+  description String?
+  quantity    Int?
+  note        String?
+  memberId    String?
+  member      Member?         @relation(fields: [memberId], references: [id])
+  club        Club            @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  deletedAt   DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([clubId, type, date])
+  @@index([memberId])
+}
+
+model Tournament {
+  id        String               @id @default(cuid())
+  clubId    String
+  name      String
+  date      DateTime?
+  note      String?
+  club      Club                 @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  brackets  TournamentBracket[]
+  members   TournamentMember[]
+  expenses  TournamentExpense[]
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  @@index([clubId])
+}
+
+model TournamentBracket {
+  id                   String     @id @default(cuid())
+  tournamentId         String
+  order                Int
+  groupAMemberId       String?
+  groupBMemberId       String?
+  practiceGroupName    String?
+  practiceGroupMembers String?
+  tournament           Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  groupAMember         Member?    @relation("GroupA", fields: [groupAMemberId], references: [id])
+  groupBMember         Member?    @relation("GroupB", fields: [groupBMemberId], references: [id])
+}
+
+model TournamentMember {
+  id             String     @id @default(cuid())
+  tournamentId   String
+  memberId       String
+  shareCost      Int        @default(0)
+  additionalCost Int        @default(0)
+  additionalNote String?
+  amount         Int        @default(0)
+  countsToBudget Boolean    @default(false)
+  tournament     Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  member         Member     @relation(fields: [memberId], references: [id])
+
+  @@unique([tournamentId, memberId])
+}
+
+model TournamentExpense {
+  id                   String     @id @default(cuid())
+  tournamentId         String
+  expenseName          String
+  paidBy               String
+  paidByMemberId       String?
+  amount               Int
+  surplusAmount        Int        @default(0)
+  linkSurplusToBudget  Boolean    @default(false)
+  tournament           Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  paidByMember         Member?    @relation("ExpensePaidBy", fields: [paidByMemberId], references: [id])
+}
+
+model Party {
+  id        String        @id @default(cuid())
+  clubId    String
+  date      DateTime?
+  location  String?
+  totalCost Int           @default(0)
+  note      String?
+  club      Club          @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  members   PartyMember[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([clubId])
+}
+
+model PartyMember {
+  id             String  @id @default(cuid())
+  partyId        String
+  memberId       String
+  amount         Int     @default(0)
+  countsToBudget Boolean @default(false)
+  party          Party   @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  member         Member  @relation(fields: [memberId], references: [id])
+
+  @@unique([partyId, memberId])
+}

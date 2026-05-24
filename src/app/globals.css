@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+/* DESIGN.md — raw tokens */
+:root {
+  --primary: #fcd535;
+  --primary-active: #f0b90b;
+  --primary-disabled: #3a3a1f;
+  --on-primary: #181a20;
+  --ink: #181a20;
+  --body: #eaecef;
+  --body-on-light: #181a20;
+  --muted: #707a8a;
+  --muted-strong: #929aa5;
+  --hairline-on-light: #eaecef;
+  --hairline-on-dark: #2b3139;
+  --border-strong: #cdd1d6;
+  --canvas-light: #ffffff;
+  --canvas-dark: #0b0e11;
+  --surface-card-dark: #1e2329;
+  --surface-elevated-dark: #2b3139;
+  --surface-soft-light: #fafafa;
+  --surface-strong-light: #f5f5f5;
+  --on-dark: #ffffff;
+  --trading-up: #0ecb81;
+  --trading-down: #f6465d;
+  --accent-turquoise: #2dbdb6;
+  --info: #3b82f6;
+  --info-ring: #3b82f6;
+  --destructive: #f6465d;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --font-body: var(--font-inter), system-ui, sans-serif;
+  --font-number: var(--font-mono), "IBM Plex Sans", monospace;
+}
+
+@theme inline {
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--on-primary);
+  --color-background: var(--canvas-dark);
+  --color-foreground: var(--on-dark);
+  --color-card: var(--surface-card-dark);
+  --color-card-foreground: var(--on-dark);
+  --color-secondary: var(--surface-elevated-dark);
+  --color-secondary-foreground: var(--on-dark);
+  --color-muted: var(--surface-elevated-dark);
+  --color-muted-foreground: var(--muted);
+  --color-accent: var(--surface-elevated-dark);
+  --color-accent-foreground: var(--on-dark);
+  --color-destructive: var(--destructive);
+  --color-border: var(--hairline-on-dark);
+  --color-input: var(--hairline-on-dark);
+  --color-ring: var(--info-ring);
+  --color-trading-up: var(--trading-up);
+  --color-trading-down: var(--trading-down);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-number);
+}
+
+/* Dark dashboard shell (default) */
+.theme-dark {
+  --color-background: var(--canvas-dark);
+  --color-foreground: var(--on-dark);
+  --color-card: var(--surface-card-dark);
+  --color-card-foreground: var(--on-dark);
+  --color-secondary: var(--surface-elevated-dark);
+  --color-secondary-foreground: var(--on-dark);
+  --color-muted: var(--surface-elevated-dark);
+  --color-muted-foreground: var(--muted);
+  --color-accent: var(--surface-elevated-dark);
+  --color-accent-foreground: var(--on-dark);
+  --color-border: var(--hairline-on-dark);
+  --color-input: var(--hairline-on-dark);
+}
+
+/* Light transactional surfaces */
+.theme-light {
+  --color-background: var(--canvas-light);
+  --color-foreground: var(--body-on-light);
+  --color-card: var(--canvas-light);
+  --color-card-foreground: var(--body-on-light);
+  --color-secondary: var(--surface-strong-light);
+  --color-secondary-foreground: var(--ink);
+  --color-muted: var(--surface-soft-light);
+  --color-muted-foreground: var(--muted);
+  --color-accent: var(--surface-soft-light);
+  --color-accent-foreground: var(--ink);
+  --color-border: var(--hairline-on-light);
+  --color-input: var(--hairline-on-light);
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+html {
+  overflow-x: hidden;
+}
+
+body {
+  background: var(--canvas-dark);
+  color: var(--on-dark);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.table-scroll {
+  scrollbar-width: thin;
+}
+
+.font-number {
+  font-family: var(--font-number);
+  font-variant-numeric: tabular-nums;
+}
+
+.text-trading-up {
+  color: var(--trading-up);
+}
+
+.text-trading-down {
+  color: var(--trading-down);
+}

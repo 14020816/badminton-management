@@ -1,0 +1,90 @@
+---
+description: Enforce UI alignment with DESIGN.md (Binance-inspired financial design system)
+globs: src/**/*.{tsx,css},src/components/**/*
+alwaysApply: false
+---
+
+# UI Design System — follow DESIGN.md
+
+Source of truth: [DESIGN.md](../../DESIGN.md). Before creating or editing UI, read relevant sections and map surfaces to documented tokens.
+
+## Theme by surface
+
+| App surface | Theme | Canvas |
+|-------------|-------|--------|
+| Dashboard, sidebar, tables, ledger | Dark (default) | `#0b0e11` |
+| Forms: sessions, transactions, settings, login | Light (transactional) | `#ffffff` |
+
+Do not mix themes within one screen. Yellow CTAs work on both.
+
+## Required color tokens
+
+Use CSS variables or Tailwind theme mapped to DESIGN.md — never ad-hoc hex outside this set:
+
+```
+primary: #fcd535          on-primary: #181a20
+primary-active: #f0b90b   primary-disabled: #3a3a1f
+canvas-dark: #0b0e11      canvas-light: #ffffff
+surface-card-dark: #1e2329 surface-elevated-dark: #2b3139
+surface-soft-light: #fafafa
+body: #eaecef             body-on-light / ink: #181a20
+muted: #707a8a            on-dark: #ffffff
+hairline-on-dark: #2b3139 hairline-on-light: #eaecef
+trading-up: #0ecb81       trading-down: #f6465d
+info-ring: #3b82f6
+```
+
+## Typography
+
+- **Copy** (labels, nav, body): BinanceNova → fallback `Inter, system-ui, sans-serif`
+- **Money & numbers** (VND, balances, stats): BinancePlex → fallback `"JetBrains Mono", "IBM Plex Sans", monospace`
+- Page title: 24px/600 · Section title: 20px/600 · Body: 14px/400 · Button: 14px/600
+- Large fund stats: 40px/700 in number font
+
+## Spacing & radius
+
+- Base unit 4px. Card padding: 24px. Section gaps: 80px. Nav height: 64px.
+- Buttons/inputs: `rounded-md` (6px). Cards: `rounded-xl` (12px). Pill CTAs: `rounded-full`.
+
+## Component mapping (B15 app)
+
+| UI element | DESIGN.md component |
+|------------|---------------------|
+| Sidebar / app shell | `top-nav-dark` on `canvas-dark` |
+| Summary stat cards | `stat-callout-card` (yellow numbers) or `trust-badge` |
+| Data tables (sessions, transactions, ledger) | `markets-table-card` + `markets-row` |
+| Positive balance / surplus | `price-up-cell` (`trading-up` text) |
+| Negative balance / owes money | `price-down-cell` (`trading-down` text) |
+| Primary action (Lưu, Tạo, Đăng nhập) | `button-primary` — yellow bg, `#181a20` text |
+| Secondary / cancel | `button-secondary-on-dark` or `button-secondary-on-light` |
+| Delete / destructive row action | keep destructive semantics; do not use `trading-down` bg |
+| Form inputs on light pages | `text-input-on-light` |
+| Search/filter on dark pages | `search-input-on-dark` |
+| Dashboard chart container | `price-chart-card` pattern on dark card surface |
+
+## Do
+
+- Use `trading-up` / `trading-down` for ledger +/- amounts only (text color, not card bg).
+- Keep primary yellow scarce — CTAs, key stats, active nav highlight.
+- Use flat surfaces + hairline borders; no glassmorphism or heavy shadows.
+- Format VND with number font; labels with body font.
+
+## Don't
+
+- Don't use green `#16a34a` or generic shadcn defaults when DESIGN tokens exist.
+- Don't put white text on yellow buttons (`on-primary` is dark ink).
+- Don't use `trading-up`/`trading-down` for non-financial success/error toasts.
+- Don't add gradients except documented hero bands (not used in app dashboard).
+- Don't introduce a second brand accent color.
+
+## Implementation check
+
+When changing UI, verify:
+
+1. Colors match DESIGN.md tokens (not hardcoded unrelated palette).
+2. Dashboard/sidebar = dark; forms = light.
+3. Money columns use number typography.
+4. Primary buttons = yellow + dark text, 40px height, 6px radius.
+5. Tables sit on `#1e2329` cards with `#2b3139` dividers.
+
+If DESIGN.md and existing code conflict, update code to match DESIGN.md and centralize tokens in `src/app/globals.css`.

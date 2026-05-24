@@ -1,0 +1,532 @@
+{
+  "$schema": "badminton-management/excel-format/v1",
+  "sourceFile": "B15-THEO DÕI CHI PHÍ CHƠI CẦU LÔNG.xlsx",
+  "description": "Cấu trúc file Excel gốc — dùng làm spec khi import/seed dữ liệu vào database",
+  "version": "1.0.0",
+  "locale": "vi-VN",
+  "currency": "VND",
+
+  "parseRules": {
+    "dateFormat": {
+      "type": "excelSerial",
+      "epoch": "1899-12-30",
+      "description": "Cột ngày lưu dạng số serial Excel (VD: 45864 → 26/07/2025)"
+    },
+    "numberFormat": {
+      "decimalSeparator": ".",
+      "thousandsSeparator": null,
+      "description": "Giá trị số trong XML không có dấu phân cách hàng nghìn"
+    },
+    "emptyValue": {
+      "representations": ["", null, "0", "0.0"],
+      "description": "Ô trống hoặc 0 được coi là không tham gia / không có giá trị"
+    },
+    "memberNameAliases": {
+      "Sơn": "Sơn Lê",
+      "description": "Sheet Tổng quan dùng 'Sơn'; sheet Theo dõi đánh cầu dùng 'Sơn Lê'"
+    }
+  },
+
+  "members": [
+    { "excelColumn": "C", "name": "Hằng", "aliases": [] },
+    { "excelColumn": "D", "name": "Lực", "aliases": [] },
+    { "excelColumn": "E", "name": "Hoàng", "aliases": [] },
+    { "excelColumn": "F", "name": "Yến", "aliases": [] },
+    { "excelColumn": "G", "name": "Tuấn", "aliases": [] },
+    { "excelColumn": "H", "name": "Giới", "aliases": [] },
+    { "excelColumn": "I", "name": "Trung", "aliases": [] },
+    { "excelColumn": "J", "name": "Bố anh Trung", "aliases": [] },
+    { "excelColumn": "K", "name": "Hải Anh", "aliases": [] },
+    { "excelColumn": "L", "name": "Vân", "aliases": [] },
+    { "excelColumn": "M", "name": "Hùng", "aliases": [] },
+    { "excelColumn": "N", "name": "Thích", "aliases": [] },
+    { "excelColumn": "O", "name": "Sơn Lê", "aliases": ["Sơn"] },
+    { "excelColumn": "P", "name": "Sơn Trần", "aliases": [] }
+  ],
+
+  "enums": {
+    "expenseCategory": [
+      { "value": "Thuê sân", "code": "COURT_RENTAL", "countInSource": 89 },
+      { "value": "Mua cầu", "code": "SHUTTLE_PURCHASE", "countInSource": 44 },
+      { "value": "Nước", "code": "WATER", "countInSource": 23 },
+      { "value": "Gửi xe", "code": "PARKING", "countInSource": 7 },
+      { "value": "Option", "code": "OPTION", "countInSource": 9 }
+    ],
+    "incomeCategory": [
+      { "value": "Đóng quỹ", "code": "FUND_CONTRIBUTION", "countInSource": 91 },
+      { "value": "Optional", "code": "OPTIONAL", "countInSource": 0 }
+    ],
+    "paymentStatus": [
+      { "value": "Đã nộp", "code": "PAID" }
+    ]
+  },
+
+  "settings": {
+    "sourceSheet": "Theo dõi đánh cầu",
+    "fields": [
+      {
+        "label": "Giá cầu lông/quả",
+        "excelCell": "S1",
+        "field": "shuttlePricePerUnit",
+        "type": "integer",
+        "sampleValue": 24500
+      },
+      {
+        "label": "Tồn kho cầu",
+        "excelCell": "R2",
+        "field": "shuttleInventory",
+        "type": "integer",
+        "sampleValue": 686
+      }
+    ]
+  },
+
+  "sheets": [
+    {
+      "name": "Theo dõi đánh cầu",
+      "dbEntity": "Session",
+      "dbRelatedEntities": ["SessionShare", "Member"],
+      "recordCount": 94,
+      "dataStartRow": 4,
+      "headerRow": 3,
+      "sections": [
+        {
+          "name": "config",
+          "rows": [1, 2],
+          "description": "Cấu hình toàn cục, không phải bản ghi buổi đánh"
+        },
+        {
+          "name": "sessions",
+          "rows": "4+",
+          "description": "Mỗi hàng = 1 buổi đánh; bỏ qua hàng không có cột A"
+        }
+      ],
+      "columns": [
+        {
+          "excelColumn": "A",
+          "header": "Ngày",
+          "field": "date",
+          "type": "excelSerialDate",
+          "required": true,
+          "dbColumn": "sessions.date"
+        },
+        {
+          "excelColumn": "B",
+          "header": "Tổng chi phí",
+          "field": "totalCost",
+          "type": "integer",
+          "required": false,
+          "dbColumn": "sessions.total_cost",
+          "note": "Trùng với cột V; có thể là giá trị tính sẵn"
+        },
+        {
+          "excelColumn": "C-P",
+          "header": "[Tên thành viên]",
+          "field": "shares",
+          "type": "memberShareMap",
+          "required": false,
+          "dbTable": "session_shares",
+          "dbColumns": {
+            "memberId": "member_id",
+            "amount": "amount"
+          },
+          "note": "Mỗi cột C–P map 1 thành viên; 0 = không tham gia"
+        },
+        {
+          "excelColumn": "Q",
+          "header": "Loại sân",
+          "field": "courtType",
+          "type": "enum",
+          "enum": ["FIXED", "FLEXIBLE"],
+          "labels": { "FIXED": "Cố định", "FLEXIBLE": "Linh hoạt" },
+          "required": false,
+          "dbColumn": "sessions.court_type"
+        },
+        {
+          "excelColumn": "R",
+          "header": "Số cầu dùng",
+          "field": "shuttlesUsed",
+          "type": "integer",
+          "required": false,
+          "dbColumn": "sessions.shuttles_used"
+        },
+        {
+          "excelColumn": "S",
+          "header": "Thuê sân",
+          "field": "courtRental",
+          "type": "integer",
+          "required": false,
+          "dbColumn": "sessions.court_rental"
+        },
+        {
+          "excelColumn": "T",
+          "header": "Nước",
+          "field": "water",
+          "type": "integer",
+          "required": false,
+          "dbColumn": "sessions.water"
+        },
+        {
+          "excelColumn": "U",
+          "header": "Gửi xe",
+          "field": "parking",
+          "type": "integer",
+          "required": false,
+          "dbColumn": "sessions.parking"
+        },
+        {
+          "excelColumn": "V",
+          "header": "Tổng chi phí",
+          "field": "totalCostDuplicate",
+          "type": "integer",
+          "required": false,
+          "dbColumn": "sessions.total_cost",
+          "note": "Bản sao cột B"
+        },
+        {
+          "excelColumn": "W",
+          "header": "Mỗi người",
+          "field": "costPerPerson",
+          "type": "integer",
+          "required": false,
+          "dbColumn": "sessions.cost_per_person",
+          "computed": "totalCost / attendeeCount"
+        },
+        {
+          "excelColumn": "X",
+          "header": "Note",
+          "field": "note",
+          "type": "string",
+          "required": false,
+          "dbColumn": "sessions.note"
+        }
+      ],
+      "computedFields": [
+        {
+          "field": "shuttleCost",
+          "formula": "shuttlesUsed * shuttlePricePerUnit"
+        },
+        {
+          "field": "totalCost",
+          "formula": "courtRental + water + parking + shuttleCost",
+          "defaultMissingToZero": ["water", "parking"]
+        },
+        {
+          "field": "costPerPerson",
+          "formula": "totalCost / count(shares where amount > 0)"
+        }
+      ],
+      "seedFilter": "row[A] is not empty AND rowNumber >= 4"
+    },
+
+    {
+      "name": "Giao dịch",
+      "dbEntity": "Transaction",
+      "recordCount": {
+        "expense": 172,
+        "income": 91
+      },
+      "headerRow": 3,
+      "dataStartRow": 4,
+      "layout": "dualColumn",
+      "sections": [
+        {
+          "name": "expense",
+          "label": "Khoản chi",
+          "side": "left",
+          "dbEntity": "Transaction",
+          "dbType": "expense"
+        },
+        {
+          "name": "income",
+          "label": "Khoản thu",
+          "side": "right",
+          "dbEntity": "Transaction",
+          "dbType": "income"
+        }
+      ],
+      "columns": {
+        "expense": [
+          {
+            "excelColumn": "B",
+            "header": "Date",
+            "field": "date",
+            "type": "excelSerialDate",
+            "required": false,
+            "dbColumn": "transactions.date",
+            "note": "Một số dòng không có ngày (gộp chung)"
+          },
+          {
+            "excelColumn": "C",
+            "header": "Amount",
+            "field": "amount",
+            "type": "integer",
+            "required": true,
+            "dbColumn": "transactions.amount",
+            "seedFilter": "row[C] is not empty"
+          },
+          {
+            "excelColumn": "D",
+            "header": "Description",
+            "field": "description",
+            "type": "string",
+            "required": false,
+            "dbColumn": "transactions.description"
+          },
+          {
+            "excelColumn": "E",
+            "header": "(quantity)",
+            "field": "quantity",
+            "type": "integer",
+            "required": false,
+            "dbColumn": "transactions.quantity",
+            "note": "Số quả/hộp cầu; chỉ dùng khi category = Mua cầu"
+          },
+          {
+            "excelColumn": "F",
+            "header": "Category",
+            "field": "category",
+            "type": "enum",
+            "enumRef": "expenseCategory",
+            "required": true,
+            "dbColumn": "transactions.category"
+          }
+        ],
+        "income": [
+          {
+            "excelColumn": "J",
+            "header": "Date",
+            "field": "date",
+            "type": "excelSerialDate",
+            "required": true,
+            "dbColumn": "transactions.date"
+          },
+          {
+            "excelColumn": "K",
+            "header": "Amount",
+            "field": "amount",
+            "type": "integer",
+            "required": true,
+            "dbColumn": "transactions.amount",
+            "seedFilter": "row[K] is not empty"
+          },
+          {
+            "excelColumn": "L",
+            "header": "Description",
+            "field": "memberName",
+            "type": "string",
+            "required": true,
+            "dbColumn": "transactions.member_id",
+            "resolveAs": "member",
+            "note": "Tên người đóng quỹ, cần map sang member_id"
+          },
+          {
+            "excelColumn": "M",
+            "header": "Category",
+            "field": "category",
+            "type": "enum",
+            "enumRef": "incomeCategory",
+            "required": true,
+            "dbColumn": "transactions.category"
+          },
+          {
+            "excelColumn": "N",
+            "header": "Note",
+            "field": "note",
+            "type": "string",
+            "required": false,
+            "dbColumn": "transactions.note"
+          }
+        ]
+      }
+    },
+
+    {
+      "name": "Tổng quan",
+      "dbEntity": null,
+      "description": "Sheet tổng hợp — không seed trực tiếp; dùng để verify sau khi import",
+      "derivedFrom": ["Giao dịch", "Theo dõi đánh cầu", "Chia bảng thi đấu", "Liên hoan 1804"],
+      "sections": [
+        {
+          "name": "fundSummary",
+          "rows": [7, 11],
+          "fields": [
+            { "excelCell": "D7", "field": "totalExpense", "type": "integer", "sampleValue": 41016000 },
+            { "excelCell": "I7", "field": "totalIncome", "type": "integer", "sampleValue": 42081000 },
+            { "excelCell": "E4", "field": "fundBalance", "type": "integer", "sampleValue": 1065000, "formula": "totalIncome - totalExpense" }
+          ]
+        },
+        {
+          "name": "expenseBreakdown",
+          "headerRow": 9,
+          "dataRows": [12, 13, 14, 15, 16],
+          "columns": [
+            { "excelColumn": "B", "field": "categoryName", "type": "string" },
+            { "excelColumn": "D", "field": "total", "type": "integer" }
+          ],
+          "sampleData": [
+            { "categoryName": "Thuê sân", "total": 15305000 },
+            { "categoryName": "Mua cầu", "total": 17967000 },
+            { "categoryName": "Nước", "total": 1012000 },
+            { "categoryName": "Gửi xe", "total": 130000 },
+            { "categoryName": "Option", "total": 6602000 }
+          ]
+        },
+        {
+          "name": "memberLedger",
+          "headerRow": 18,
+          "dataStartRow": 19,
+          "dataEndRow": 32,
+          "dbEntity": "MemberLedger",
+          "description": "Sổ cái tính toán — verify, không import trực tiếp",
+          "columns": [
+            { "excelColumn": "B", "header": "Lông thủ", "field": "memberName", "type": "string", "resolveAs": "member" },
+            { "excelColumn": "C", "header": "Tổng tiền đã đóng", "field": "totalPaid", "type": "integer" },
+            { "excelColumn": "D", "header": "Chi phí chơi", "field": "totalPlayCost", "type": "integer" },
+            { "excelColumn": "E", "header": "Số tiền còn lại", "field": "remainingBalance", "type": "integer", "formula": "totalPaid - totalPlayCost" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Chia bảng thi đấu",
+      "dbEntity": "Tournament",
+      "dbRelatedEntities": ["TournamentBracket", "TournamentMember", "TournamentExpense", "PracticeGroup"],
+      "sections": [
+        {
+          "name": "bracket",
+          "headerRow": 3,
+          "dataStartRow": 4,
+          "dataEndRow": 8,
+          "dbEntity": "TournamentBracket",
+          "columns": [
+            { "excelColumn": "C", "header": "STT", "field": "order", "type": "integer" },
+            { "excelColumn": "D", "header": "Bảng A", "field": "groupAMember", "type": "string", "resolveAs": "member" },
+            { "excelColumn": "E", "header": "Bảng B", "field": "groupBMember", "type": "string", "resolveAs": "member" },
+            { "excelColumn": "M", "header": "Nhóm [n]", "field": "practiceGroupName", "type": "string" },
+            { "excelColumn": "O", "header": "(members list)", "field": "practiceGroupMembers", "type": "stringList", "separator": ", ", "resolveAs": "member" }
+          ]
+        },
+        {
+          "name": "memberFund",
+          "headerRow": 13,
+          "dataStartRow": 14,
+          "dbEntity": "TournamentMember",
+          "columns": [
+            { "excelColumn": "B", "header": "STT", "field": "order", "type": "integer" },
+            { "excelColumn": "C", "header": "Thành viên", "field": "memberName", "type": "string", "resolveAs": "member", "required": true },
+            { "excelColumn": "D", "header": "Số tiền quỹ", "field": "fundAmount", "type": "integer" },
+            { "excelColumn": "E", "header": "Trạng thái", "field": "paymentStatus", "type": "enum", "enumRef": "paymentStatus" },
+            { "excelColumn": "F", "header": "Thua kèo bia", "field": "beerBetLoss", "type": "integer" },
+            { "excelColumn": "G", "header": "Tiền đã chi mua đồ", "field": "personalExpensePaid", "type": "integer" },
+            { "excelColumn": "H", "header": "Còn phải đóng", "field": "amountDue", "type": "integer", "computed": "entryFee + mealCost + beerBetLoss - fundAmount - personalExpensePaid" },
+            { "excelColumn": "I", "header": "Quỹ cá nhân còn", "field": "personalFundRemaining", "type": "integer" }
+          ]
+        },
+        {
+          "name": "expenses",
+          "headerRow": 13,
+          "dataStartRow": 14,
+          "dbEntity": "TournamentExpense",
+          "columns": [
+            { "excelColumn": "K", "header": "Chi phí", "field": "expenseName", "type": "string", "required": true },
+            { "excelColumn": "L", "header": "Người chi", "field": "paidBy", "type": "string", "note": "Qũy hoặc tên thành viên" },
+            { "excelColumn": "M", "header": "Tiền", "field": "amount", "type": "integer", "required": true }
+          ]
+        },
+        {
+          "name": "linkedParty",
+          "headerRow": 13,
+          "columns": [
+            { "excelColumn": "O", "field": "partyName", "type": "string", "sampleValue": "Liên hoan Dũng Xoăn 13 người" },
+            { "excelColumn": "P", "field": "partyTotal", "type": "integer", "sampleValue": 4573000 },
+            { "excelColumn": "Q", "field": "partyNote", "type": "string", "sampleValue": "- 420k (kèo bia)" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Liên hoan 1804",
+      "dbEntity": "Party",
+      "dbRelatedEntities": ["PartyMember"],
+      "description": "Sheet chứa nhiều sự kiện liên hoan; tên sheet cố định theo ngày mẫu",
+      "events": [
+        {
+          "name": "Liên hoan 18/04",
+          "headerRow": 1,
+          "dataStartRow": 2,
+          "layout": "event1804",
+          "eventMeta": {
+            "columns": [
+              { "excelColumn": "A", "field": "venueName", "type": "string", "sampleValue": "Dũng Xoăn" },
+              { "excelColumn": "B", "field": "totalBill", "type": "integer", "sampleValue": 3317000 },
+              { "excelColumn": "C", "field": "adjustmentNote", "type": "string" },
+              { "excelColumn": "D", "field": "eventLabel", "type": "string", "sampleValue": "Liên hoan: 18/04" },
+              { "excelColumn": "A3", "field": "totalAttendees", "type": "integer", "sampleValue": 11, "note": "Hàng 3 cột A" },
+              { "excelColumn": "B5", "field": "baseMealPerPerson", "type": "integer", "sampleValue": 230000, "note": "Tiền còn lại phải đóng mỗi người" }
+            ]
+          },
+          "memberRows": {
+            "columns": [
+              { "excelColumn": "E", "field": "memberName", "type": "string", "resolveAs": "member" },
+              { "excelColumn": "F", "field": "betLoss", "type": "integer" },
+              { "excelColumn": "H", "field": "extraMealCost", "type": "integer" },
+              { "excelColumn": "I", "field": "totalAmount", "type": "integer" }
+            ]
+          }
+        },
+        {
+          "name": "Liên hoan 16/05",
+          "headerRow": 15,
+          "dataStartRow": 16,
+          "layout": "event1605",
+          "eventMeta": {
+            "columns": [
+              { "excelColumn": "D", "field": "eventLabel", "type": "string", "sampleValue": "Liên Hoan: 16/05" }
+            ]
+          },
+          "memberRows": {
+            "columns": [
+              { "excelColumn": "E", "field": "memberName", "type": "string", "resolveAs": "member" },
+              { "excelColumn": "F", "field": "itemPurchaseCost", "type": "integer" },
+              { "excelColumn": "G", "field": "betLoss", "type": "integer" },
+              { "excelColumn": "H", "field": "betLossReason", "type": "string" },
+              { "excelColumn": "I", "field": "extraMealCost", "type": "integer" },
+              { "excelColumn": "J", "field": "amountDue", "type": "integer" },
+              { "excelColumn": "K", "field": "netTotal", "type": "integer" }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+
+  "seedOrder": [
+    "members",
+    "settings",
+    "sessions",
+    "session_shares",
+    "transactions_expense",
+    "transactions_income",
+    "tournaments",
+    "tournament_brackets",
+    "tournament_members",
+    "tournament_expenses",
+    "parties",
+    "party_members"
+  ],
+
+  "verification": {
+    "description": "Sau khi seed, so sánh với sheet Tổng quan",
+    "checks": [
+      { "field": "totalExpense", "expected": 41016000 },
+      { "field": "totalIncome", "expected": 42081000 },
+      { "field": "fundBalance", "expected": 1065000 },
+      { "field": "sessionCount", "expected": 94 },
+      { "field": "expenseTransactionCount", "expected": 172 },
+      { "field": "incomeTransactionCount", "expected": 91 }
+    ]
+  }
+}
