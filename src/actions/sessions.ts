@@ -110,7 +110,8 @@ export async function createSessionAction(clubId: string, formData: FormData) {
   const scheduleIdRaw = String(formData.get("scheduleId") ?? "").trim();
   const scheduleId = scheduleIdRaw || null;
   let parsed = await parseSessionFormData(clubId, formData);
-  let { date, courtType, note, address, googleAddressUrl } = parsed;
+  const { date } = parsed;
+  let { courtType, note, address, googleAddressUrl } = parsed;
 
   if (scheduleId) {
     const schedule = await db.sessionSchedule.findFirst({
@@ -203,7 +204,8 @@ export async function updateSessionAction(
   if (!existing) throw new Error("Không tìm thấy buổi đánh");
 
   let parsed = await parseSessionFormData(clubId, formData);
-  let { date, courtType, note } = parsed;
+  const { date, note } = parsed;
+  let { courtType } = parsed;
 
   if (existing.scheduleId) {
     const schedule = await db.sessionSchedule.findFirst({
