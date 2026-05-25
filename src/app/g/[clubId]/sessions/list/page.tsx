@@ -1,19 +1,19 @@
+import { Suspense } from "react";
 import { ClubRole } from "@prisma/client";
 import { getClubViewAccess } from "@/lib/club-context";
 import { getMembers, getShuttleTypes } from "@/lib/data/dashboard";
 import { getSessionsPaginated } from "@/actions/sessions";
 import { parseSessionListFilters } from "@/lib/sessions-list-filters";
 import { SessionsListView } from "@/components/sessions/sessions-list-view";
+import { TablePageLoading } from "@/components/layout/page-loading";
 
-export default async function ClubSessionsListPage({
-  params,
-  searchParams,
+async function SessionsListContent({
+  clubId,
+  filters,
 }: {
-  params: Promise<{ clubId: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  clubId: string;
+  filters: ReturnType<typeof parseSessionListFilters>;
 }) {
-  const { clubId } = await params;
-  const filters = parseSessionListFilters(await searchParams);
   const { access } = await getClubViewAccess(clubId);
 
   const restrictToMemberId =
@@ -42,5 +42,25 @@ export default async function ClubSessionsListPage({
       isAdmin={access?.role === ClubRole.ADMIN}
       showMemberFilter={access?.role !== ClubRole.MEMBER}
     />
+  );
+}
+
+export default async function ClubSessionsListPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ clubId: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const { clubId } = await params;
+  const filters = parseSessionListFilters(await searchParams);
+
+  return (
+    <Suspense
+      key={JSON.stringify(filters)}
+      fallback={<TablePageLoading />}
+    >
+      <SessionsListContent clubId={clubId} filters={filters} />
+    </Suspense>
   );
 }

@@ -1,12 +1,11 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/layout/page-header";
 import { AppHeader } from "@/components/layout/app-header";
-import { MutationForm } from "@/components/form/mutation-form";
+import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
 import { createClubAction } from "@/actions/clubs";
 
 export function CreateClubForm({ userName }: { userName?: string | null }) {
@@ -32,9 +31,9 @@ export function CreateClubForm({ userName }: { userName?: string | null }) {
                   required
                 />
               </div>
-              <Button type="submit" className="w-full">
+              <SubmitButton pendingText="Đang tạo..." className="w-full">
                 Tạo nhóm
-              </Button>
+              </SubmitButton>
             </MutationForm>
           </CardContent>
         </Card>

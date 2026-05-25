@@ -5,11 +5,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { CourtType } from "@prisma/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/layout/page-header";
-import { MutationForm } from "@/components/form/mutation-form";
+import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
 import { AddressDisplay } from "@/components/form/address-fields";
 import { SessionMemberSharesEditor } from "@/components/sessions/session-member-shares-editor";
 import { createSessionAction } from "@/actions/sessions";
@@ -322,12 +321,12 @@ export function SessionsScheduledView({
                 onGuestsChange={setGuests}
               />
 
-              <Button
-                type="submit"
+              <SubmitButton
+                pendingText="Đang lưu..."
                 disabled={allocations.length === 0 || !scheduleId || !date}
               >
                 Ghi nhận buổi đánh
-              </Button>
+              </SubmitButton>
             </MutationForm>
           )}
         </CardContent>

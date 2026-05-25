@@ -20,7 +20,7 @@ import {
   updatePartyAction,
 } from "@/actions/parties";
 import { PageHeader } from "@/components/layout/page-header";
-import { MutationForm } from "@/components/form/mutation-form";
+import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
 import { ConfirmDeleteButton } from "@/components/ui/confirm-delete-button";
 import {
   PartyMemberCostsEditor,
@@ -167,7 +167,7 @@ export function PartiesView({
                 onAllocationsChange={setCreateAllocations}
               />
               <div className="md:col-span-2">
-                <Button type="submit">Tạo liên hoan</Button>
+                <SubmitButton pendingText="Đang tạo...">Tạo liên hoan</SubmitButton>
               </div>
             </MutationForm>
           </CardContent>
@@ -245,7 +245,7 @@ export function PartiesView({
                     }}
                   />
                   <div className="flex gap-2 md:col-span-2">
-                    <Button type="submit">Lưu</Button>
+                    <SubmitButton pendingText="Đang lưu...">Lưu</SubmitButton>
                     <Button
                       type="button"
                       variant="outline"

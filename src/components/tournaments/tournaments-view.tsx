@@ -20,7 +20,7 @@ import {
   updateTournamentAction,
 } from "@/actions/tournaments";
 import { PageHeader } from "@/components/layout/page-header";
-import { MutationForm } from "@/components/form/mutation-form";
+import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
 import { ConfirmDeleteButton } from "@/components/ui/confirm-delete-button";
 import {
   TournamentMemberCostsEditor,
@@ -285,7 +285,7 @@ export function TournamentsView({
                 onAllocationsChange={setCreateAllocations}
               />
               <div className="md:col-span-2">
-                <Button type="submit">Tạo giải</Button>
+                <SubmitButton pendingText="Đang tạo...">Tạo giải</SubmitButton>
               </div>
             </MutationForm>
           </CardContent>
@@ -380,7 +380,7 @@ export function TournamentsView({
                     }}
                   />
                   <div className="flex gap-2 md:col-span-2">
-                    <Button type="submit">Lưu</Button>
+                    <SubmitButton pendingText="Đang lưu...">Lưu</SubmitButton>
                     <Button type="button" variant="outline" onClick={cancelEdit}>
                       Hủy
                     </Button>

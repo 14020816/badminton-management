@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MutationForm } from "@/components/form/mutation-form";
+import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
 import { AddressFields } from "@/components/form/address-fields";
 import {
   SessionMemberSharesEditor,
@@ -265,12 +265,12 @@ export function SessionEditDialog({
             >
               Hủy
             </Button>
-            <Button
-              type="submit"
+            <SubmitButton
+              pendingText="Đang lưu..."
               disabled={shuttleTypes.length === 0 || allocations.length === 0}
             >
               Lưu thay đổi
-            </Button>
+            </SubmitButton>
           </DialogFooter>
         </MutationForm>
       </DialogContent>

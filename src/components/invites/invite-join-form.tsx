@@ -1,10 +1,9 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MutationForm } from "@/components/form/mutation-form";
+import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
 import { acceptInviteAction } from "@/actions/invites";
 
 type UnlinkedMember = { id: string; name: string };
@@ -53,9 +52,9 @@ export function InviteJoinForm({
                 ))}
               </select>
             </div>
-            <Button type="submit" className="w-full">
+            <SubmitButton pendingText="Đang tham gia..." className="w-full">
               Liên kết và tham gia
-            </Button>
+            </SubmitButton>
           </MutationForm>
         ) : null}
 
@@ -78,9 +77,13 @@ export function InviteJoinForm({
                 required={!hasUnlinked}
               />
             </div>
-            <Button type="submit" variant={hasUnlinked ? "secondary" : "default"} className="w-full">
+            <SubmitButton
+              pendingText="Đang tham gia..."
+              variant={hasUnlinked ? "secondary" : "default"}
+              className="w-full"
+            >
               {hasUnlinked ? "Tạo tên mới và tham gia" : "Tham gia nhóm"}
-            </Button>
+            </SubmitButton>
           </MutationForm>
         </div>
       </CardContent>

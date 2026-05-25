@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MutationForm } from "@/components/form/mutation-form";
+import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
 import { registerAction } from "@/actions/auth";
 
 export function RegisterForm({ callbackUrl }: { callbackUrl: string }) {
@@ -34,9 +33,9 @@ export function RegisterForm({ callbackUrl }: { callbackUrl: string }) {
           </Label>
           <Input id="password" name="password" type="password" minLength={6} required />
         </div>
-        <Button type="submit" className="w-full">
+        <SubmitButton pendingText="Đang đăng ký..." className="w-full">
           Đăng ký
-        </Button>
+        </SubmitButton>
       </MutationForm>
       <p className="mt-4 text-center text-sm text-[var(--muted)]">
         Đã có tài khoản?{" "}

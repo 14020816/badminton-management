@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/layout/page-header";
 import { ClubLinkSection } from "@/components/clubs/club-link-section";
 import { InviteLinkSection } from "@/components/clubs/invite-link-section";
-import { MutationForm } from "@/components/form/mutation-form";
+import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
 import { updateClubNameAction } from "@/actions/clubs";
 
 export function ClubInfoSettings({
@@ -58,7 +58,7 @@ export function ClubInfoSettings({
                 />
               </div>
               <div className="flex gap-2">
-                <Button type="submit">Lưu</Button>
+                <SubmitButton pendingText="Đang lưu...">Lưu</SubmitButton>
                 <Button
                   type="button"
                   variant="outline"

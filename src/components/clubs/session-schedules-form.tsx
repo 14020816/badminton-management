@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MutationForm } from "@/components/form/mutation-form";
+import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
 import { AddressFields } from "@/components/form/address-fields";
 import {
   createSessionScheduleAction,
@@ -135,9 +135,12 @@ export function SessionSchedulesForm({
               ))}
             </div>
 
-            <Button type="submit" disabled={selectedWeekdays.length === 0}>
+            <SubmitButton
+              pendingText="Đang thêm..."
+              disabled={selectedWeekdays.length === 0}
+            >
               Thêm lịch
-            </Button>
+            </SubmitButton>
           </MutationForm>
         </CardContent>
       </Card>
@@ -219,13 +222,13 @@ export function SessionSchedulesForm({
                               : "Đã bật lịch đánh"
                           }
                         >
-                          <Button
+                          <SubmitButton
                             variant={schedule.enabled ? "outline" : "default"}
                             size="sm"
-                            type="submit"
+                            pendingText="Đang cập nhật..."
                           >
                             {schedule.enabled ? "Tắt" : "Bật lại"}
-                          </Button>
+                          </SubmitButton>
                         </MutationForm>
                       </div>
                     </TableCell>

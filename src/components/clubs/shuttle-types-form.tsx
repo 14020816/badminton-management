@@ -5,7 +5,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MutationForm } from "@/components/form/mutation-form";
+import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
 import { updateClubSettingsAction } from "@/actions/settings";
 import {
   DEFAULT_SHUTTLES_PER_BLOCK,
@@ -139,7 +139,7 @@ export function ShuttleTypesForm({
         Thêm loại cầu
       </Button>
 
-      <Button type="submit">Lưu cài đặt</Button>
+      <SubmitButton pendingText="Đang lưu...">Lưu cài đặt</SubmitButton>
     </MutationForm>
   );
 }

@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MutationForm } from "@/components/form/mutation-form";
+import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
 import { AddressFields } from "@/components/form/address-fields";
 import { updateSessionScheduleAction } from "@/actions/session-schedules";
 import {
@@ -164,9 +164,12 @@ export function SessionScheduleEditDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Hủy
             </Button>
-            <Button type="submit" disabled={selectedWeekdays.length === 0}>
+            <SubmitButton
+              pendingText="Đang lưu..."
+              disabled={selectedWeekdays.length === 0}
+            >
               Lưu thay đổi
-            </Button>
+            </SubmitButton>
           </DialogFooter>
         </MutationForm>
       </DialogContent>

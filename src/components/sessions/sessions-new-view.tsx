@@ -2,11 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/layout/page-header";
-import { MutationForm } from "@/components/form/mutation-form";
+import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
 import { AddressFields } from "@/components/form/address-fields";
 import { SessionMemberSharesEditor } from "@/components/sessions/session-member-shares-editor";
 import { createSessionAction } from "@/actions/sessions";
@@ -176,12 +175,12 @@ export function SessionsNewView({
               />
             </div>
             <div className="md:col-span-2">
-              <Button
-                type="submit"
+              <SubmitButton
+                pendingText="Đang lưu..."
                 disabled={shuttleTypes.length === 0 || allocations.length === 0}
               >
                 Lưu buổi đánh
-              </Button>
+              </SubmitButton>
             </div>
           </MutationForm>
         </CardContent>

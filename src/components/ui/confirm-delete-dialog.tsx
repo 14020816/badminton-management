@@ -51,6 +51,7 @@ export function ConfirmDeleteDialog({
             variant="destructive"
             onClick={onConfirm}
             disabled={pending}
+            loading={pending}
           >
             {pending ? "Đang xóa..." : confirmLabel}
           </Button>

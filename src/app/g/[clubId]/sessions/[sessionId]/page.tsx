@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { ClubRole } from "@prisma/client";
 import { notFound } from "next/navigation";
 import { getClubViewAccess } from "@/lib/club-context";
@@ -5,13 +6,15 @@ import { getMembers, getShuttleTypes } from "@/lib/data/dashboard";
 import { getSessionDetail } from "@/actions/sessions";
 import { buildSessionListPath } from "@/lib/sessions-list-filters";
 import { SessionDetailView } from "@/components/sessions/session-detail-view";
+import { FormPageLoading } from "@/components/layout/page-loading";
 
-export default async function SessionDetailPage({
-  params,
+async function SessionDetailContent({
+  clubId,
+  sessionId,
 }: {
-  params: Promise<{ clubId: string; sessionId: string }>;
+  clubId: string;
+  sessionId: string;
 }) {
-  const { clubId, sessionId } = await params;
   const { access } = await getClubViewAccess(clubId);
 
   const restrictToMemberId =
@@ -44,5 +47,19 @@ export default async function SessionDetailPage({
         note: null,
       })}
     />
+  );
+}
+
+export default async function SessionDetailPage({
+  params,
+}: {
+  params: Promise<{ clubId: string; sessionId: string }>;
+}) {
+  const { clubId, sessionId } = await params;
+
+  return (
+    <Suspense fallback={<FormPageLoading />}>
+      <SessionDetailContent clubId={clubId} sessionId={sessionId} />
+    </Suspense>
   );
 }

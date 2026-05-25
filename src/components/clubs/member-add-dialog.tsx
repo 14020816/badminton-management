@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MutationForm } from "@/components/form/mutation-form";
+import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
 import { createMemberAction } from "@/actions/members";
 import { MEMBER_RANKS } from "@/lib/domain/member";
 
@@ -64,7 +64,7 @@ export function MemberAddDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Hủy
             </Button>
-            <Button type="submit">Thêm</Button>
+            <SubmitButton pendingText="Đang thêm...">Thêm</SubmitButton>
           </DialogFooter>
         </MutationForm>
       </DialogContent>

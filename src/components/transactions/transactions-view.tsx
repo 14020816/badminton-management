@@ -2,7 +2,6 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -19,7 +18,7 @@ import {
   deleteTransactionAction,
 } from "@/actions/transactions";
 import { PageHeader } from "@/components/layout/page-header";
-import { MutationForm } from "@/components/form/mutation-form";
+import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
 import { ConfirmDeleteButton } from "@/components/ui/confirm-delete-button";
 import {
   EXPENSE_CATEGORY_LABELS,
@@ -113,7 +112,7 @@ export function TransactionsView({
                     <Input id="exp-description" name="description" />
                   </div>
                   <div>
-                    <Button type="submit">Lưu khoản chi</Button>
+                    <SubmitButton pendingText="Đang lưu...">Lưu khoản chi</SubmitButton>
                   </div>
                 </MutationForm>
               </CardContent>
@@ -235,7 +234,7 @@ export function TransactionsView({
                     <Input id="inc-note" name="note" />
                   </div>
                   <div>
-                    <Button type="submit">Lưu khoản thu</Button>
+                    <SubmitButton pendingText="Đang lưu...">Lưu khoản thu</SubmitButton>
                   </div>
                 </MutationForm>
               </CardContent>

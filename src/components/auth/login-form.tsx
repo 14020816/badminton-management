@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MutationForm } from "@/components/form/mutation-form";
+import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
 import { loginAction } from "@/actions/auth";
 
 export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
@@ -20,41 +19,26 @@ export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
           <Label htmlFor="email" required>
             Email
           </Label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            defaultValue="admin@b15.local"
-            required
-          />
+          <Input id="email" name="email" type="email" required />
         </div>
         <div className="space-y-2">
           <Label htmlFor="password" required>
             Mật khẩu
           </Label>
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            defaultValue="admin123"
-            required
-          />
+          <Input id="password" name="password" type="password" required />
         </div>
-        <Button type="submit" className="w-full">
+        <SubmitButton pendingText="Đang đăng nhập..." className="w-full">
           Đăng nhập
-        </Button>
+        </SubmitButton>
       </MutationForm>
-      <p className="mt-4 text-center text-sm text-[var(--muted)]">
+      <p className="mt-4 text-center text-sm text-muted-foreground">
         Chưa có tài khoản?{" "}
         <Link
           href={`/register?callbackUrl=${encodeURIComponent(callbackUrl)}`}
-          className="font-medium text-[var(--primary)] underline hover:text-[var(--primary-active)]"
+          className="font-medium text-primary underline hover:text-(--primary-active)"
         >
           Đăng ký
         </Link>
-      </p>
-      <p className="mt-2 text-center text-xs text-[var(--muted)]">
-        Demo: admin@b15.local / admin123
       </p>
     </>
   );

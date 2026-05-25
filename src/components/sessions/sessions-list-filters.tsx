@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import type { CourtType } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,20 +30,23 @@ export function SessionsListFilters({
   showMemberFilter: boolean;
 }) {
   const router = useRouter();
+  const [pending, startTransition] = useTransition();
   const [courtType, setCourtType] = useState(filters.courtType ?? "");
   const [memberIds, setMemberIds] = useState<string[]>(filters.memberIds);
   const [date, setDate] = useState(filters.date ?? "");
   const [note, setNote] = useState(filters.note ?? "");
 
   function applyFilters() {
-    router.push(
-      buildSessionListPath(clubId, {
-        courtType: courtType ? (courtType as CourtType) : null,
-        memberIds,
-        date: date || null,
-        note: note.trim() || null,
-      }),
-    );
+    startTransition(() => {
+      router.push(
+        buildSessionListPath(clubId, {
+          courtType: courtType ? (courtType as CourtType) : null,
+          memberIds,
+          date: date || null,
+          note: note.trim() || null,
+        }),
+      );
+    });
   }
 
   function resetFilters() {
@@ -51,14 +54,16 @@ export function SessionsListFilters({
     setMemberIds([]);
     setDate("");
     setNote("");
-    router.push(
-      buildSessionListPath(clubId, {
-        courtType: null,
-        memberIds: [],
-        date: null,
-        note: null,
-      }),
-    );
+    startTransition(() => {
+      router.push(
+        buildSessionListPath(clubId, {
+          courtType: null,
+          memberIds: [],
+          date: null,
+          note: null,
+        }),
+      );
+    });
   }
 
   return (
@@ -125,7 +130,7 @@ export function SessionsListFilters({
       </div>
 
       <div className="flex flex-wrap gap-2 lg:col-span-2 xl:col-span-4">
-        <Button type="submit" size="sm">
+        <Button type="submit" size="sm" loading={pending}>
           Lọc
         </Button>
         <Button
@@ -133,6 +138,7 @@ export function SessionsListFilters({
           size="sm"
           variant="outline"
           onClick={resetFilters}
+          disabled={pending}
         >
           Xóa bộ lọc
         </Button>

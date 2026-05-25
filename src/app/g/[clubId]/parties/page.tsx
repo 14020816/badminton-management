@@ -1,15 +1,12 @@
+import { Suspense } from "react";
 import { ClubRole } from "@prisma/client";
 import { getClubViewAccess } from "@/lib/club-context";
 import { getParties } from "@/actions/parties";
 import { getMembers } from "@/lib/data/dashboard";
 import { PartiesView } from "@/components/parties/parties-view";
+import { TablePageLoading } from "@/components/layout/page-loading";
 
-export default async function ClubPartiesPage({
-  params,
-}: {
-  params: Promise<{ clubId: string }>;
-}) {
-  const { clubId } = await params;
+async function PartiesContent({ clubId }: { clubId: string }) {
   const { access } = await getClubViewAccess(clubId);
   const [parties, members] = await Promise.all([
     getParties(clubId),
@@ -23,5 +20,19 @@ export default async function ClubPartiesPage({
       members={members}
       isAdmin={access?.role === ClubRole.ADMIN}
     />
+  );
+}
+
+export default async function ClubPartiesPage({
+  params,
+}: {
+  params: Promise<{ clubId: string }>;
+}) {
+  const { clubId } = await params;
+
+  return (
+    <Suspense fallback={<TablePageLoading />}>
+      <PartiesContent clubId={clubId} />
+    </Suspense>
   );
 }
