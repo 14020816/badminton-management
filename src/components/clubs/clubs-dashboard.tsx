@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/page-header";
 import { AppHeader } from "@/components/layout/app-header";
 import { formatVND } from "@/lib/format";
+import { APP_NAME } from "@/lib/site-metadata";
 
 export type UserClubCard = {
   clubId: string;
@@ -26,7 +27,7 @@ export function ClubsDashboard({
   return (
     <div className="theme-dark min-h-[100dvh] bg-[var(--canvas-dark)] p-4 text-[var(--on-dark)] md:p-8">
       <div className="mx-auto max-w-5xl space-y-6">
-        <AppHeader userName={userName} title="B15 Cầu lông" />
+        <AppHeader userName={userName} title={APP_NAME} />
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <PageHeader
             title="Nhóm cầu lông"

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { APP_DESCRIPTION, APP_NAME } from "@/lib/site-metadata";
 import "./globals.css";
 
 const inter = Inter({
@@ -14,8 +15,11 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "B15 - Quản lý chi phí cầu lông",
-  description: "Hệ thống quản lý chi phí chơi cầu lông nhóm B15",
+  title: {
+    default: APP_NAME,
+    template: `%s · ${APP_NAME}`,
+  },
+  description: APP_DESCRIPTION,
 };
 
 export const viewport = {

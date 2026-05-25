@@ -1,5 +1,10 @@
+import type { Metadata } from "next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/login-form";
+
+export const metadata: Metadata = {
+  title: "Đăng nhập",
+};
 
 export default async function LoginPage({
   searchParams,

@@ -1,6 +1,11 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireAuth, getUserClubs } from "@/lib/club-context";
 import { ClubsDashboard } from "@/components/clubs/clubs-dashboard";
+
+export const metadata: Metadata = {
+  title: "Tất cả nhóm",
+};
 
 export default async function HomePage() {
   const session = await requireAuth();

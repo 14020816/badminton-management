@@ -1,9 +1,25 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ClubRole } from "@prisma/client";
-import { getClubViewAccess } from "@/lib/club-context";
+import { getClubViewAccess, getClubById } from "@/lib/club-context";
 import { getDashboardData } from "@/lib/data/dashboard";
 import { DashboardView } from "@/components/dashboard/dashboard-view";
 import { DashboardPageLoading } from "@/components/layout/page-loading";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ clubId: string }>;
+}): Promise<Metadata> {
+  const { clubId } = await params;
+  const club = await getClubById(clubId);
+
+  return {
+    title: {
+      absolute: club?.name ?? "Nhóm",
+    },
+  };
+}
 
 async function DashboardContent({ clubId }: { clubId: string }) {
   const { access } = await getClubViewAccess(clubId);

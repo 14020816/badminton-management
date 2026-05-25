@@ -1,8 +1,22 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { getInviteJoinData } from "@/actions/invites";
 import { InviteJoinForm } from "@/components/invites/invite-join-form";
 import { Button } from "@/components/ui/button";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ token: string }>;
+}): Promise<Metadata> {
+  const { token } = await params;
+  const data = await getInviteJoinData(token);
+
+  return {
+    title: data ? `Tham gia CLB ${data.clubName}` : "Lời mời không hợp lệ",
+  };
+}
 
 const pageClassName =
   "theme-dark flex min-h-[100dvh] items-center justify-center bg-[var(--canvas-dark)] p-4 text-[var(--on-dark)]";

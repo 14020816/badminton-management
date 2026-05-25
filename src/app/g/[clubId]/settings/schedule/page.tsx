@@ -1,6 +1,11 @@
+import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
 import { getSessionSchedules } from "@/actions/session-schedules";
 import { SessionSchedulesForm } from "@/components/clubs/session-schedules-form";
+
+export const metadata: Metadata = {
+  title: "Lịch đánh",
+};
 
 export default async function ClubSettingsSchedulePage({
   params,

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ClubRole } from "@prisma/client";
 import { getClubViewAccess } from "@/lib/club-context";
@@ -5,6 +6,10 @@ import { getTournaments } from "@/actions/tournaments";
 import { getMembers } from "@/lib/data/dashboard";
 import { TournamentsView } from "@/components/tournaments/tournaments-view";
 import { TablePageLoading } from "@/components/layout/page-loading";
+
+export const metadata: Metadata = {
+  title: "Giải đấu",
+};
 
 async function TournamentsContent({ clubId }: { clubId: string }) {
   const { access } = await getClubViewAccess(clubId);

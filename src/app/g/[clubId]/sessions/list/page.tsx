@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ClubRole } from "@prisma/client";
 import { getClubViewAccess } from "@/lib/club-context";
@@ -6,6 +7,10 @@ import { getSessionsPaginated } from "@/actions/sessions";
 import { parseSessionListFilters } from "@/lib/sessions-list-filters";
 import { SessionsListView } from "@/components/sessions/sessions-list-view";
 import { TablePageLoading } from "@/components/layout/page-loading";
+
+export const metadata: Metadata = {
+  title: "Danh sách buổi đánh",
+};
 
 async function SessionsListContent({
   clubId,

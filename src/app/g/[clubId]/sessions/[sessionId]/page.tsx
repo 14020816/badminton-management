@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ClubRole } from "@prisma/client";
 import { notFound } from "next/navigation";
@@ -7,6 +8,20 @@ import { getSessionDetail } from "@/actions/sessions";
 import { buildSessionListPath } from "@/lib/sessions-list-filters";
 import { SessionDetailView } from "@/components/sessions/session-detail-view";
 import { FormPageLoading } from "@/components/layout/page-loading";
+import { formatSessionDate } from "@/lib/format";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ clubId: string; sessionId: string }>;
+}): Promise<Metadata> {
+  const { clubId, sessionId } = await params;
+  const session = await getSessionDetail(clubId, sessionId);
+
+  return {
+    title: session ? formatSessionDate(session.date) : "Buổi đánh",
+  };
+}
 
 async function SessionDetailContent({
   clubId,

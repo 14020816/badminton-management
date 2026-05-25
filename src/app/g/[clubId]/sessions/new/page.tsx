@@ -1,6 +1,11 @@
+import type { Metadata } from "next";
 import { requireClubAdmin } from "@/lib/club-context";
 import { getMembers, getShuttleTypes } from "@/lib/data/dashboard";
 import { SessionsNewView } from "@/components/sessions/sessions-new-view";
+
+export const metadata: Metadata = {
+  title: "Thêm thủ công",
+};
 
 export default async function ClubSessionsNewPage({
   params,

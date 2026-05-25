@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/page-header";
 import { getShuttleTypes } from "@/lib/data/dashboard";
 import { ShuttleTypesForm } from "@/components/clubs/shuttle-types-form";
+
+export const metadata: Metadata = {
+  title: "Cầu lông",
+};
 
 export default async function ClubSettingsShuttlesPage({
   params,

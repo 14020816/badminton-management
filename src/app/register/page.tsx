@@ -1,5 +1,10 @@
+import type { Metadata } from "next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RegisterForm } from "@/components/auth/register-form";
+
+export const metadata: Metadata = {
+  title: "Đăng ký",
+};
 
 export default async function RegisterPage({
   searchParams,

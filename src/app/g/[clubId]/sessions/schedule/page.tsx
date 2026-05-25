@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import { requireClubAdmin } from "@/lib/club-context";
 import { getSessionSchedules, getFulfilledScheduleSessions } from "@/actions/session-schedules";
 import { getMembers, getShuttleTypes } from "@/lib/data/dashboard";
 import { SessionsScheduledView } from "@/components/sessions/sessions-scheduled-view";
+
+export const metadata: Metadata = {
+  title: "Thêm cố định",
+};
 
 export default async function ClubSessionsSchedulePage({
   params,

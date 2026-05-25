@@ -1,8 +1,10 @@
 import { LogoutButton } from "@/components/layout/logout-button";
 
+import { APP_NAME } from "@/lib/site-metadata";
+
 export function AppHeader({
   userName,
-  title = "B15 Cầu lông",
+  title = APP_NAME,
 }: {
   userName?: string | null;
   title?: string;
