@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
+import { FormSelect } from "@/components/form/form-select";
 import { AddressFields } from "@/components/form/address-fields";
 import {
   SessionMemberSharesEditor,
@@ -30,10 +31,8 @@ import {
   COURT_TYPES,
   formatDate,
   formatDateInput,
+  formatVND,
 } from "@/lib/format";
-
-const selectClassName =
-  "flex h-10 w-full rounded-md border border-[var(--color-input)] bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]";
 
 type Member = { id: string; name: string };
 type ShuttleTypeOption = {
@@ -50,6 +49,7 @@ export type EditableSession = {
   courtRental: number;
   shuttlesUsed: number;
   shuttleTypeId: string | null;
+  shuttlePricePerBlock: number | null;
   scheduleId: string | null;
   address: string | null;
   googleAddressUrl: string | null;
@@ -62,6 +62,7 @@ export type EditableSession = {
     extra?: number;
     extraNote?: string | null;
     memberPaysForGuests?: boolean;
+    paysShuttleCost?: boolean;
   }[];
   guests: {
     id: string;
@@ -93,6 +94,7 @@ export function SessionEditDialog({
   const [courtRental, setCourtRental] = useState(0);
   const [shuttlesUsed, setShuttlesUsed] = useState(0);
   const [shuttleTypeId, setShuttleTypeId] = useState("");
+  const [shuttlePricePerBlock, setShuttlePricePerBlock] = useState(0);
   const [allocations, setAllocations] = useState<ShareAllocationPayload[]>([]);
   const [guests, setGuests] = useState<GuestAllocationPayload[]>([]);
 
@@ -101,19 +103,40 @@ export function SessionEditDialog({
     setCourtRental(session.courtRental);
     setShuttlesUsed(session.shuttlesUsed);
     setShuttleTypeId(session.shuttleTypeId ?? shuttleTypes[0]?.id ?? "");
+    setShuttlePricePerBlock(
+      session.shuttlePricePerBlock ??
+        shuttleTypes.find((type) => type.id === session.shuttleTypeId)
+          ?.pricePerBlock ??
+        shuttleTypes[0]?.pricePerBlock ??
+        0,
+    );
     setAllocations(buildInitialShareAllocations(session.shares));
     setGuests(buildInitialGuestAllocations(session.guests));
   }, [session, shuttleTypes]);
 
-  const shuttlePricing = useMemo(() => {
-    const type =
+  const selectedShuttleType = useMemo(
+    () =>
       shuttleTypes.find((option) => option.id === shuttleTypeId) ??
-      shuttleTypes[0];
-    return {
-      pricePerBlock: type?.pricePerBlock ?? 0,
-      shuttlesPerBlock: type?.shuttlesPerBlock ?? 12,
-    };
-  }, [shuttleTypeId, shuttleTypes]);
+      shuttleTypes[0] ??
+      null,
+    [shuttleTypeId, shuttleTypes],
+  );
+
+  const shuttlePricing = useMemo(
+    () => ({
+      pricePerBlock: shuttlePricePerBlock,
+      shuttlesPerBlock: selectedShuttleType?.shuttlesPerBlock ?? 12,
+    }),
+    [selectedShuttleType, shuttlePricePerBlock],
+  );
+
+  useEffect(() => {
+    if (!session || !selectedShuttleType) return;
+    if (session.shuttleTypeId === shuttleTypeId && session.shuttlePricePerBlock) {
+      return;
+    }
+    setShuttlePricePerBlock(selectedShuttleType.pricePerBlock);
+  }, [selectedShuttleType, session, shuttleTypeId]);
 
   if (!session) return null;
 
@@ -156,23 +179,18 @@ export function SessionEditDialog({
             {isScheduled && session.courtType && (
               <input type="hidden" name="courtType" value={session.courtType} />
             )}
-            <select
+            <FormSelect
               id={`edit-courtType-${session.id}`}
               name={isScheduled ? undefined : "courtType"}
               required={!isScheduled}
               disabled={isScheduled}
               defaultValue={session.courtType ?? ""}
-              className={selectClassName}
-            >
-              <option value="" disabled>
-                Chọn loại sân
-              </option>
-              {COURT_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {COURT_TYPE_LABELS[type]}
-                </option>
-              ))}
-            </select>
+              placeholder="Chọn loại sân"
+              options={COURT_TYPES.map((type) => ({
+                value: type,
+                label: COURT_TYPE_LABELS[type],
+              }))}
+            />
             {isScheduled && (
               <p className="text-xs text-[var(--color-muted-foreground)]">
                 Loại sân theo lịch cố định
@@ -198,20 +216,17 @@ export function SessionEditDialog({
               <Label htmlFor={`edit-shuttleTypeId-${session.id}`} required>
                 Loại cầu
               </Label>
-              <select
+              <FormSelect
                 id={`edit-shuttleTypeId-${session.id}`}
                 name="shuttleTypeId"
                 required
                 value={shuttleTypeId}
-                onChange={(event) => setShuttleTypeId(event.target.value)}
-                className={selectClassName}
-              >
-                {shuttleTypes.map((type) => (
-                  <option key={type.id} value={type.id}>
-                    {type.name} ({type.shuttlesPerBlock} quả/hộp)
-                  </option>
-                ))}
-              </select>
+                onValueChange={setShuttleTypeId}
+                options={shuttleTypes.map((type) => ({
+                  value: type.id,
+                  label: `${type.name} (${type.shuttlesPerBlock} quả/hộp)`,
+                }))}
+              />
             </div>
           ) : (
             <p className="text-sm text-[var(--color-muted-foreground)] md:col-span-2">
@@ -232,6 +247,29 @@ export function SessionEditDialog({
               onChange={(event) => setShuttlesUsed(Number(event.target.value) || 0)}
             />
           </div>
+          {shuttleTypes.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor={`edit-shuttlePricePerBlock-${session.id}`} required>
+                Giá cầu (một hộp)
+              </Label>
+              <Input
+                id={`edit-shuttlePricePerBlock-${session.id}`}
+                name="shuttlePricePerBlock"
+                type="number"
+                min={0}
+                required
+                value={shuttlePricePerBlock}
+                onChange={(event) =>
+                  setShuttlePricePerBlock(Number(event.target.value) || 0)
+                }
+              />
+              {selectedShuttleType && (
+                <p className="text-xs text-[var(--color-muted-foreground)]">
+                  Mặc định từ loại cầu: {formatVND(selectedShuttleType.pricePerBlock)}
+                </p>
+              )}
+            </div>
+          )}
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor={`edit-note-${session.id}`}>Ghi chú</Label>
             <Input

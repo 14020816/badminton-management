@@ -7,14 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MultiSelect } from "@/components/ui/multi-select";
+import { FormSelect } from "@/components/form/form-select";
 import { COURT_TYPE_LABELS, COURT_TYPES } from "@/lib/format";
 import {
   buildSessionListPath,
   type SessionListFilters,
 } from "@/lib/sessions-list-filters";
-
-const selectClassName =
-  "flex h-10 w-full rounded-md border border-[var(--color-input)] bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]";
 
 type MemberOption = { id: string; name: string };
 
@@ -76,19 +74,19 @@ export function SessionsListFilters({
     >
       <div className="space-y-2">
         <Label htmlFor="courtType">Loại sân</Label>
-        <select
+        <FormSelect
           id="courtType"
           value={courtType}
-          onChange={(event) => setCourtType(event.target.value)}
-          className={selectClassName}
-        >
-          <option value="">Tất cả loại sân</option>
-          {COURT_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {COURT_TYPE_LABELS[type]}
-            </option>
-          ))}
-        </select>
+          onValueChange={setCourtType}
+          placeholder="Tất cả loại sân"
+          options={[
+            { value: "", label: "Tất cả loại sân" },
+            ...COURT_TYPES.map((type) => ({
+              value: type,
+              label: COURT_TYPE_LABELS[type],
+            })),
+          ]}
+        />
       </div>
 
       {showMemberFilter && (

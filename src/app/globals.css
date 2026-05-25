@@ -99,6 +99,17 @@
   border-color: var(--color-border);
 }
 
+.theme-dark select,
+.theme-dark select option {
+  background-color: var(--surface-card-dark);
+  color: var(--on-dark);
+}
+
+.theme-dark select:disabled,
+.theme-dark select:disabled option {
+  opacity: 0.5;
+}
+
 html {
   overflow-x: hidden;
 }

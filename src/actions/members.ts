@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireClubAdmin, requireClubViewAccess } from "@/lib/club-context";
 import { parseMemberRank } from "@/lib/domain/member";
+import { loadMembersSettingsData } from "@/lib/data/members-settings";
 
 function settingsPaths(clubId: string) {
   return [`/g/${clubId}/settings/members`, `/g/${clubId}/sessions`, `/g/${clubId}`];
@@ -11,17 +12,7 @@ function settingsPaths(clubId: string) {
 
 export async function getMembersForSettings(clubId: string) {
   await requireClubViewAccess(clubId);
-  return db.member.findMany({
-    where: { clubId },
-    include: {
-      membership: {
-        include: {
-          user: { select: { name: true, email: true } },
-        },
-      },
-    },
-    orderBy: [{ rank: { sort: "asc", nulls: "last" } }, { name: "asc" }],
-  });
+  return loadMembersSettingsData(clubId);
 }
 
 export async function createMemberAction(clubId: string, formData: FormData) {

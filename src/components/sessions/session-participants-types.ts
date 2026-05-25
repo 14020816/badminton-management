@@ -15,6 +15,7 @@ export type SessionParticipantsData = {
     extra?: number;
     extraNote?: string | null;
     memberPaysForGuests?: boolean;
+    paysShuttleCost?: boolean;
   }[];
   guests: {
     id: string;

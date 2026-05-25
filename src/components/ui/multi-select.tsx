@@ -22,7 +22,7 @@ type MultiSelectProps = {
 };
 
 const triggerClassName =
-  "flex h-10 w-full items-center justify-between rounded-md border border-[var(--color-input)] bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]";
+  "flex h-10 w-full items-center justify-between rounded-md border border-[var(--color-input)] bg-transparent px-3 py-2 text-sm text-[var(--color-foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]";
 
 export function MultiSelect({
   options,

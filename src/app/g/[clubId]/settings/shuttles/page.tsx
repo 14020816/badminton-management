@@ -23,23 +23,23 @@ export default async function ClubSettingsShuttlesPage({
         description="Cấu hình giá cầu, số quả mỗi hộp và tồn kho"
       />
 
-      <Card className="max-w-2xl">
+      <Card>
         <CardHeader>
-          <CardTitle>Cấu hình cầu lông</CardTitle>
+          <CardTitle>Danh sách loại cầu</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="mb-4 text-sm text-[var(--muted)]">
-            Mỗi loại cầu có giá theo hộp và số quả trong hộp (mặc định 12). Chi phí buổi
-            đánh = số quả dùng × (giá hộp ÷ quả/hộp).
+          <p className="mb-4 text-sm text-[var(--color-muted-foreground)]">
+            Mỗi loại cầu có giá theo hộp và số quả trong hộp (mặc định 12). Chi phí
+            buổi đánh = số quả dùng × (giá hộp ÷ quả/hộp).
           </p>
           <ShuttleTypesForm
             clubId={clubId}
-            initialTypes={shuttleTypes.map((t) => ({
-              id: t.id,
-              name: t.name,
-              pricePerBlock: t.pricePerBlock,
-              shuttlesPerBlock: t.shuttlesPerBlock,
-              inventory: t.inventory,
+            initialTypes={shuttleTypes.map((type) => ({
+              id: type.id,
+              name: type.name,
+              pricePerBlock: type.pricePerBlock,
+              shuttlesPerBlock: type.shuttlesPerBlock,
+              inventory: type.inventory,
             }))}
           />
         </CardContent>

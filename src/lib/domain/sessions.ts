@@ -12,6 +12,7 @@ export interface SessionCostInput {
 export type MemberShareInput = {
   memberId: string;
   memberPaysForGuests?: boolean;
+  paysShuttleCost?: boolean;
   water?: number;
   parking?: number;
   extra?: number;
@@ -37,6 +38,7 @@ export type ComputedSessionShare = {
   extra: number;
   extraNote: string | null;
   memberPaysForGuests: boolean;
+  paysShuttleCost: boolean;
 };
 
 export type ComputedSessionGuest = {
@@ -49,11 +51,28 @@ export type ComputedSessionGuest = {
   extraNote: string | null;
 };
 
+export type SessionCostParts = {
+  courtRental: number;
+  shuttleCost: number;
+};
+
+export type SessionPerPersonCosts = {
+  courtPerPerson: number;
+  shuttlePerPerson: number;
+  courtPayers: number;
+  shuttlePayers: number;
+};
+
+export function calcSessionCostParts(input: SessionCostInput): SessionCostParts {
+  return {
+    courtRental: input.courtRental,
+    shuttleCost: calcShuttleCost(input.shuttlesUsed, input.shuttlePricing),
+  };
+}
+
 export function calcSharedSessionBase(input: SessionCostInput): number {
-  return (
-    input.courtRental +
-    calcShuttleCost(input.shuttlesUsed, input.shuttlePricing)
-  );
+  const { courtRental, shuttleCost } = calcSessionCostParts(input);
+  return courtRental + shuttleCost;
 }
 
 /** @deprecated Use calcSharedSessionBase — session water/parking are per-member now */
@@ -71,6 +90,60 @@ export function calcCostPerPerson(
 ): number {
   if (attendeeCount <= 0) return 0;
   return Math.round(totalCost / attendeeCount);
+}
+
+function guestPaysDirectly(
+  guest: GuestShareInput,
+  memberPaysMap: Map<string, boolean>,
+): boolean {
+  if (!guest.hostedByMemberId) return true;
+  return !(memberPaysMap.get(guest.hostedByMemberId) ?? false);
+}
+
+export function calcSessionPerPersonCosts(
+  costInput: SessionCostInput,
+  members: MemberShareInput[],
+  guests: GuestShareInput[],
+): SessionPerPersonCosts {
+  const { courtRental, shuttleCost } = calcSessionCostParts(costInput);
+  const memberPaysMap = new Map(
+    members.map((member) => [
+      member.memberId,
+      member.memberPaysForGuests ?? false,
+    ]),
+  );
+
+  let courtPayers = members.length;
+  let shuttlePayers = members.filter(
+    (member) => member.paysShuttleCost !== false,
+  ).length;
+
+  for (const guest of guests) {
+    if (!guestPaysDirectly(guest, memberPaysMap)) continue;
+    courtPayers += 1;
+    shuttlePayers += 1;
+  }
+
+  return {
+    courtPayers,
+    shuttlePayers,
+    courtPerPerson: calcCostPerPerson(courtRental, courtPayers),
+    shuttlePerPerson: calcCostPerPerson(shuttleCost, shuttlePayers),
+  };
+}
+
+export function calcMemberBaseShare(
+  perPerson: SessionPerPersonCosts,
+  paysShuttleCost: boolean,
+): number {
+  return (
+    perPerson.courtPerPerson +
+    (paysShuttleCost !== false ? perPerson.shuttlePerPerson : 0)
+  );
+}
+
+export function calcGuestBaseShare(perPerson: SessionPerPersonCosts): number {
+  return perPerson.courtPerPerson + perPerson.shuttlePerPerson;
 }
 
 export function calcEvenShares(
@@ -101,21 +174,21 @@ function normalizeExtras(input: {
 }
 
 export function calcMemberShares(
-  sharedBase: number,
+  costInput: SessionCostInput,
   members: MemberShareInput[],
 ): ComputedSessionShare[] {
-  return calcSessionAllocations(sharedBase, members, []).shares;
+  return calcSessionAllocations(costInput, members, []).shares;
 }
 
 export function calcSessionAllocations(
-  sharedBase: number,
+  costInput: SessionCostInput,
   members: MemberShareInput[],
   guests: GuestShareInput[],
 ): { shares: ComputedSessionShare[]; guests: ComputedSessionGuest[] } {
   const attendeeCount = members.length + guests.length;
   if (attendeeCount === 0) return { shares: [], guests: [] };
 
-  const basePerPerson = calcCostPerPerson(sharedBase, attendeeCount);
+  const perPerson = calcSessionPerPersonCosts(costInput, members, guests);
   const memberPaysMap = new Map(
     members.map((member) => [
       member.memberId,
@@ -133,7 +206,10 @@ export function calcSessionAllocations(
 
     const defaultAmount = memberPaysForGuests
       ? 0
-      : basePerPerson + extras.water + extras.parking + extras.extra;
+      : calcGuestBaseShare(perPerson) +
+        extras.water +
+        extras.parking +
+        extras.extra;
     const amount =
       guest.amount != null && Number.isFinite(guest.amount)
         ? Math.max(0, Math.round(guest.amount))
@@ -153,6 +229,7 @@ export function calcSessionAllocations(
   const shares: ComputedSessionShare[] = members.map((member) => {
     const extras = normalizeExtras(member);
     const memberPaysForGuests = member.memberPaysForGuests ?? false;
+    const paysShuttleCost = member.paysShuttleCost !== false;
     const hostedGuests = guests.filter(
       (guest) => guest.hostedByMemberId === member.memberId,
     );
@@ -160,7 +237,7 @@ export function calcSessionAllocations(
     let hostedShare = 0;
     let hostedExtras = 0;
     if (memberPaysForGuests) {
-      hostedShare = basePerPerson * hostedGuests.length;
+      hostedShare = calcGuestBaseShare(perPerson) * hostedGuests.length;
       for (const guest of hostedGuests) {
         const guestExtras = normalizeExtras(guest);
         hostedExtras +=
@@ -169,7 +246,7 @@ export function calcSessionAllocations(
     }
 
     const defaultAmount =
-      basePerPerson +
+      calcMemberBaseShare(perPerson, paysShuttleCost) +
       hostedShare +
       hostedExtras +
       extras.water +
@@ -188,6 +265,7 @@ export function calcSessionAllocations(
       extra: extras.extra,
       extraNote: extras.extraNote,
       memberPaysForGuests,
+      paysShuttleCost,
     };
   });
 
@@ -237,6 +315,7 @@ export type ShareAllocationPayload = {
   amount: number | null;
   amountCustom?: boolean;
   memberPaysForGuests?: boolean;
+  paysShuttleCost?: boolean;
 };
 
 export type GuestAllocationPayload = {
@@ -279,6 +358,7 @@ export function parseShareAllocations(raw: string): MemberShareInput[] {
     members.push({
       memberId,
       memberPaysForGuests: Boolean(row.memberPaysForGuests),
+      paysShuttleCost: row.paysShuttleCost !== false,
       water: Number(row.water ?? 0),
       parking: Number(row.parking ?? 0),
       extra: Number(row.extra ?? 0),
@@ -332,11 +412,11 @@ export function parseGuestAllocations(raw: string): GuestShareInput[] {
 }
 
 export function defaultShareAmount(
-  sharedBasePerPerson: number,
+  basePerPerson: number,
   row: Pick<ShareAllocationPayload, "water" | "parking" | "extra">,
 ): number {
   return (
-    sharedBasePerPerson +
+    basePerPerson +
     Math.max(0, row.water) +
     Math.max(0, row.parking) +
     Math.max(0, row.extra)

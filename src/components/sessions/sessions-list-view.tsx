@@ -32,6 +32,7 @@ type Session = {
   parking: number;
   shuttlesUsed: number;
   shuttleTypeId: string | null;
+  shuttlePricePerBlock: number | null;
   shuttleType: { id: string; name: string } | null;
   scheduleId: string | null;
   address: string | null;
@@ -48,6 +49,7 @@ type Session = {
     extra?: number;
     extraNote?: string | null;
     memberPaysForGuests?: boolean;
+    paysShuttleCost?: boolean;
   }[];
   guests: {
     id: string;

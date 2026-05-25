@@ -12,7 +12,13 @@ export default async function ClubSettingsMembersPage({
   params: Promise<{ clubId: string }>;
 }) {
   const { clubId } = await params;
-  const members = await getMembersForSettings(clubId);
+  const { members, totalSessionCount } = await getMembersForSettings(clubId);
 
-  return <ClubMembersSettings clubId={clubId} members={members} />;
+  return (
+    <ClubMembersSettings
+      clubId={clubId}
+      members={members}
+      totalSessionCount={totalSessionCount}
+    />
+  );
 }

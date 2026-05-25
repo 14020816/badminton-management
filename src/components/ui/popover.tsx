@@ -17,6 +17,7 @@ const PopoverContent = React.forwardRef<
       ref={ref}
       align={align}
       sideOffset={sideOffset}
+      data-slot="popover-content"
       className={cn(
         "theme-dark z-50 min-w-[8rem] rounded-md border border-[var(--color-border)] bg-[var(--color-background)] p-4 text-[var(--color-foreground)] shadow-md outline-none",
         className,

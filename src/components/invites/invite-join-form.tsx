@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
+import { FormSelect } from "@/components/form/form-select";
 import { acceptInviteAction } from "@/actions/invites";
 
 type UnlinkedMember = { id: string; name: string };
@@ -36,21 +37,15 @@ export function InviteJoinForm({
             <input type="hidden" name="mode" value="link" />
             <div className="space-y-2">
               <Label required>Chọn tên trên sổ cái</Label>
-              <select
+              <FormSelect
                 name="memberId"
                 required
-                defaultValue=""
-                className="flex h-10 w-full rounded-md border border-[var(--color-input)] bg-transparent px-3 py-2 text-sm"
-              >
-                <option value="" disabled>
-                  Chọn lông thủ
-                </option>
-                {unlinkedMembers.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
+                placeholder="Chọn lông thủ"
+                options={unlinkedMembers.map((member) => ({
+                  value: member.id,
+                  label: member.name,
+                }))}
+              />
             </div>
             <SubmitButton pendingText="Đang tham gia..." className="w-full">
               Liên kết và tham gia

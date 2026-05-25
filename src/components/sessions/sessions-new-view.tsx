@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/layout/page-header";
 import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
+import { FormSelect } from "@/components/form/form-select";
 import { AddressFields } from "@/components/form/address-fields";
 import { SessionMemberSharesEditor } from "@/components/sessions/session-member-shares-editor";
 import { createSessionAction } from "@/actions/sessions";
@@ -13,7 +14,7 @@ import type {
   GuestAllocationPayload,
   ShareAllocationPayload,
 } from "@/lib/domain/sessions";
-import { COURT_TYPE_LABELS, COURT_TYPES } from "@/lib/format";
+import { COURT_TYPE_LABELS, COURT_TYPES, formatVND } from "@/lib/format";
 
 type Member = { id: string; name: string };
 type ShuttleTypeOption = {
@@ -22,9 +23,6 @@ type ShuttleTypeOption = {
   pricePerBlock: number;
   shuttlesPerBlock: number;
 };
-
-const selectClassName =
-  "flex h-10 w-full rounded-md border border-[var(--color-input)] bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]";
 
 export function SessionsNewView({
   clubId,
@@ -38,23 +36,39 @@ export function SessionsNewView({
   const [courtRental, setCourtRental] = useState(0);
   const [shuttlesUsed, setShuttlesUsed] = useState(0);
   const [shuttleTypeId, setShuttleTypeId] = useState(shuttleTypes[0]?.id ?? "");
+  const [shuttlePricePerBlock, setShuttlePricePerBlock] = useState(
+    shuttleTypes[0]?.pricePerBlock ?? 0,
+  );
   const [allocations, setAllocations] = useState<ShareAllocationPayload[]>([]);
   const [guests, setGuests] = useState<GuestAllocationPayload[]>([]);
 
-  const shuttlePricing = useMemo(() => {
-    const type =
+  const selectedShuttleType = useMemo(
+    () =>
       shuttleTypes.find((option) => option.id === shuttleTypeId) ??
-      shuttleTypes[0];
-    return {
-      pricePerBlock: type?.pricePerBlock ?? 0,
-      shuttlesPerBlock: type?.shuttlesPerBlock ?? 12,
-    };
-  }, [shuttleTypeId, shuttleTypes]);
+      shuttleTypes[0] ??
+      null,
+    [shuttleTypeId, shuttleTypes],
+  );
+
+  const shuttlePricing = useMemo(
+    () => ({
+      pricePerBlock: shuttlePricePerBlock,
+      shuttlesPerBlock: selectedShuttleType?.shuttlesPerBlock ?? 12,
+    }),
+    [selectedShuttleType, shuttlePricePerBlock],
+  );
+
+  useEffect(() => {
+    if (selectedShuttleType) {
+      setShuttlePricePerBlock(selectedShuttleType.pricePerBlock);
+    }
+  }, [selectedShuttleType]);
 
   function resetForm() {
     setCourtRental(0);
     setShuttlesUsed(0);
     setShuttleTypeId(shuttleTypes[0]?.id ?? "");
+    setShuttlePricePerBlock(shuttleTypes[0]?.pricePerBlock ?? 0);
     setAllocations([]);
     setGuests([]);
   }
@@ -87,22 +101,16 @@ export function SessionsNewView({
               <Label htmlFor="courtType" required>
                 Loại sân
               </Label>
-              <select
+              <FormSelect
                 id="courtType"
                 name="courtType"
                 required
-                defaultValue=""
-                className={selectClassName}
-              >
-                <option value="" disabled>
-                  Chọn loại sân
-                </option>
-                {COURT_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {COURT_TYPE_LABELS[type]}
-                  </option>
-                ))}
-              </select>
+                placeholder="Chọn loại sân"
+                options={COURT_TYPES.map((type) => ({
+                  value: type,
+                  label: COURT_TYPE_LABELS[type],
+                }))}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="courtRental" required>
@@ -123,20 +131,17 @@ export function SessionsNewView({
                 <Label htmlFor="shuttleTypeId" required>
                   Loại cầu
                 </Label>
-                <select
+                <FormSelect
                   id="shuttleTypeId"
                   name="shuttleTypeId"
                   required
                   value={shuttleTypeId}
-                  onChange={(event) => setShuttleTypeId(event.target.value)}
-                  className={selectClassName}
-                >
-                  {shuttleTypes.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.name} ({type.shuttlesPerBlock} quả/hộp)
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={setShuttleTypeId}
+                  options={shuttleTypes.map((type) => ({
+                    value: type.id,
+                    label: `${type.name} (${type.shuttlesPerBlock} quả/hộp)`,
+                  }))}
+                />
               </div>
             ) : (
               <p className="text-sm text-[var(--muted)] md:col-span-2">
@@ -156,6 +161,27 @@ export function SessionsNewView({
                 value={shuttlesUsed}
                 onChange={(event) => setShuttlesUsed(Number(event.target.value) || 0)}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="shuttlePricePerBlock" required>
+                Giá cầu (một hộp)
+              </Label>
+              <Input
+                id="shuttlePricePerBlock"
+                name="shuttlePricePerBlock"
+                type="number"
+                min={0}
+                required
+                value={shuttlePricePerBlock}
+                onChange={(event) =>
+                  setShuttlePricePerBlock(Number(event.target.value) || 0)
+                }
+              />
+              {selectedShuttleType && (
+                <p className="text-xs text-[var(--color-muted-foreground)]">
+                  Mặc định từ loại cầu: {formatVND(selectedShuttleType.pricePerBlock)}
+                </p>
+              )}
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="note">Ghi chú</Label>

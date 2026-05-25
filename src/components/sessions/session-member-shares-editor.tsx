@@ -27,9 +27,10 @@ import {
 } from "@/components/ui/mobile-data-list";
 import {
   attendeeCount,
-  calcCostPerPerson,
+  calcGuestBaseShare,
+  calcMemberBaseShare,
   calcSessionAllocations,
-  calcSharedSessionBase,
+  calcSessionPerPersonCosts,
   defaultShareAmount,
   type GuestAllocationPayload,
   type ShareAllocationPayload,
@@ -47,18 +48,46 @@ function createGuestId() {
   return `guest-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function toMemberInputs(allocations: ShareAllocationPayload[]) {
+  return allocations.map((row) => ({
+    memberId: row.memberId,
+    memberPaysForGuests: row.memberPaysForGuests,
+    paysShuttleCost: row.paysShuttleCost,
+    water: row.water,
+    parking: row.parking,
+    extra: row.extra,
+    extraNote: row.extraNote,
+    amount: row.amountCustom ? row.amount : null,
+  }));
+}
+
+function toGuestInputs(guests: GuestAllocationPayload[]) {
+  return guests.map((guest) => ({
+    name: guest.name,
+    hostedByMemberId: guest.hostedByMemberId,
+    water: guest.water,
+    parking: guest.parking,
+    extra: guest.extra,
+    extraNote: guest.extraNote,
+    amount: guest.amountCustom ? guest.amount : null,
+  }));
+}
+
 function calcMemberDefaultAmount(
-  sharedBasePerPerson: number,
+  perPerson: ReturnType<typeof calcSessionPerPersonCosts>,
   row: ShareAllocationPayload,
   guests: GuestAllocationPayload[],
 ): number {
   const hostedGuests = guests.filter(
     (guest) => guest.hostedByMemberId === row.memberId,
   );
-  let amount = defaultShareAmount(sharedBasePerPerson, row);
+  let amount = defaultShareAmount(
+    calcMemberBaseShare(perPerson, row.paysShuttleCost !== false),
+    row,
+  );
 
   if (row.memberPaysForGuests) {
-    amount += sharedBasePerPerson * hostedGuests.length;
+    amount += calcGuestBaseShare(perPerson) * hostedGuests.length;
     for (const guest of hostedGuests) {
       amount +=
         Math.max(0, guest.water) +
@@ -71,12 +100,12 @@ function calcMemberDefaultAmount(
 }
 
 function calcGuestDefaultAmount(
-  sharedBasePerPerson: number,
+  perPerson: ReturnType<typeof calcSessionPerPersonCosts>,
   guest: GuestAllocationPayload,
   members: ShareAllocationPayload[],
 ): number {
   if (!guest.hostedByMemberId) {
-    return defaultShareAmount(sharedBasePerPerson, guest);
+    return defaultShareAmount(calcGuestBaseShare(perPerson), guest);
   }
 
   const host = members.find(
@@ -86,7 +115,7 @@ function calcGuestDefaultAmount(
     return 0;
   }
 
-  return defaultShareAmount(sharedBasePerPerson, guest);
+  return defaultShareAmount(calcGuestBaseShare(perPerson), guest);
 }
 
 export function SessionMemberSharesEditor({
@@ -108,21 +137,25 @@ export function SessionMemberSharesEditor({
   guests: GuestAllocationPayload[];
   onGuestsChange: Dispatch<SetStateAction<GuestAllocationPayload[]>>;
 }) {
-  const sharedBase = useMemo(
-    () =>
-      calcSharedSessionBase({
-        courtRental,
-        shuttlesUsed,
-        shuttlePricing,
-      }),
+  const costInput = useMemo(
+    () => ({
+      courtRental,
+      shuttlesUsed,
+      shuttlePricing,
+    }),
     [courtRental, shuttlesUsed, shuttlePricing],
   );
 
   const totalAttendees = attendeeCount(allocations, guests);
 
-  const sharedBasePerPerson = useMemo(
-    () => calcCostPerPerson(sharedBase, totalAttendees),
-    [sharedBase, totalAttendees],
+  const perPerson = useMemo(
+    () =>
+      calcSessionPerPersonCosts(
+        costInput,
+        toMemberInputs(allocations),
+        toGuestInputs(guests),
+      ),
+    [allocations, costInput, guests],
   );
 
   const selectedIds = useMemo(
@@ -137,11 +170,7 @@ export function SessionMemberSharesEditor({
       let changed = false;
       const next = current.map((row) => {
         if (row.amountCustom) return row;
-        const amount = calcMemberDefaultAmount(
-          sharedBasePerPerson,
-          row,
-          guests,
-        );
+        const amount = calcMemberDefaultAmount(perPerson, row, guests);
         if (amount === row.amount) return row;
         changed = true;
         return { ...row, amount };
@@ -149,7 +178,7 @@ export function SessionMemberSharesEditor({
 
       return changed ? next : current;
     });
-  }, [guests, onChange, sharedBasePerPerson]);
+  }, [guests, onChange, perPerson]);
 
   useEffect(() => {
     onGuestsChange((current) => {
@@ -158,11 +187,7 @@ export function SessionMemberSharesEditor({
       let changed = false;
       const next = current.map((guest) => {
         if (guest.amountCustom) return guest;
-        const amount = calcGuestDefaultAmount(
-          sharedBasePerPerson,
-          guest,
-          allocations,
-        );
+        const amount = calcGuestDefaultAmount(perPerson, guest, allocations);
         if (amount === guest.amount) return guest;
         changed = true;
         return { ...guest, amount };
@@ -170,32 +195,16 @@ export function SessionMemberSharesEditor({
 
       return changed ? next : current;
     });
-  }, [allocations, onGuestsChange, sharedBasePerPerson]);
+  }, [allocations, onGuestsChange, perPerson]);
 
   const preview = useMemo(
     () =>
       calcSessionAllocations(
-        sharedBase,
-        allocations.map((row) => ({
-          memberId: row.memberId,
-          memberPaysForGuests: row.memberPaysForGuests,
-          water: row.water,
-          parking: row.parking,
-          extra: row.extra,
-          extraNote: row.extraNote,
-          amount: row.amountCustom ? row.amount : null,
-        })),
-        guests.map((guest) => ({
-          name: guest.name,
-          hostedByMemberId: guest.hostedByMemberId,
-          water: guest.water,
-          parking: guest.parking,
-          extra: guest.extra,
-          extraNote: guest.extraNote,
-          amount: guest.amountCustom ? guest.amount : null,
-        })),
+        costInput,
+        toMemberInputs(allocations),
+        toGuestInputs(guests),
       ),
-    [allocations, guests, sharedBase],
+    [allocations, costInput, guests],
   );
 
   const totalCost =
@@ -212,10 +221,7 @@ export function SessionMemberSharesEditor({
         return current.filter((row) => row.memberId !== memberId);
       }
 
-      const nextCount = current.length + 1 + guests.length;
-      const basePerPerson = calcCostPerPerson(sharedBase, nextCount);
-
-      return [
+      const nextAllocations: ShareAllocationPayload[] = [
         ...current,
         {
           memberId,
@@ -223,11 +229,20 @@ export function SessionMemberSharesEditor({
           parking: 0,
           extra: 0,
           extraNote: null,
-          amount: basePerPerson,
+          amount: 0,
           amountCustom: false,
           memberPaysForGuests: false,
+          paysShuttleCost: true,
         },
       ];
+      const nextPerPerson = calcSessionPerPersonCosts(
+        costInput,
+        toMemberInputs(nextAllocations),
+        toGuestInputs(guests),
+      );
+      const nextRow = nextAllocations[nextAllocations.length - 1]!;
+      nextRow.amount = calcMemberDefaultAmount(nextPerPerson, nextRow, guests);
+      return nextAllocations;
     });
   }
 
@@ -236,26 +251,22 @@ export function SessionMemberSharesEditor({
       const nextMembers = current.map((row) => {
         if (row.memberId !== memberId) return row;
         const updated = { ...row, ...patch };
-        if ("memberPaysForGuests" in patch) {
+        if ("memberPaysForGuests" in patch || "paysShuttleCost" in patch) {
           updated.amountCustom = false;
         }
         if (!updated.amountCustom) {
-          updated.amount = calcMemberDefaultAmount(
-            sharedBasePerPerson,
-            updated,
-            guests,
-          );
+          updated.amount = calcMemberDefaultAmount(perPerson, updated, guests);
         }
         return updated;
       });
 
-      if ("memberPaysForGuests" in patch) {
+      if ("memberPaysForGuests" in patch || "paysShuttleCost" in patch) {
         onGuestsChange((currentGuests) =>
           currentGuests.map((guest) => {
             if (guest.hostedByMemberId !== memberId) return guest;
             const updatedGuest = { ...guest, amountCustom: false };
             updatedGuest.amount = calcGuestDefaultAmount(
-              sharedBasePerPerson,
+              perPerson,
               updatedGuest,
               nextMembers,
             );
@@ -279,7 +290,7 @@ export function SessionMemberSharesEditor({
         parking: 0,
         extra: 0,
         extraNote: null,
-        amount: sharedBasePerPerson,
+        amount: calcGuestBaseShare(perPerson),
         amountCustom: false,
       },
     ]);
@@ -296,7 +307,7 @@ export function SessionMemberSharesEditor({
         parking: 0,
         extra: 0,
         extraNote: null,
-        amount: sharedBasePerPerson,
+        amount: calcGuestBaseShare(perPerson),
         amountCustom: false,
       },
     ]);
@@ -312,7 +323,7 @@ export function SessionMemberSharesEditor({
         const updated = { ...guest, ...patch };
         if (!updated.amountCustom) {
           updated.amount = calcGuestDefaultAmount(
-            sharedBasePerPerson,
+            perPerson,
             updated,
             allocations,
           );
@@ -395,6 +406,20 @@ export function SessionMemberSharesEditor({
               })
             }
           />
+        </MobileEditorField>
+        <MobileEditorField label="Không chia cầu">
+          <label className="flex items-center gap-2">
+            <Checkbox
+              checked={row.paysShuttleCost === false}
+              onCheckedChange={(checked) =>
+                updateRow(row.memberId, {
+                  paysShuttleCost: checked !== true,
+                })
+              }
+              aria-label={`${memberName} không chia cầu`}
+            />
+            <span className="text-sm">Chỉ chia tiền sân</span>
+          </label>
         </MobileEditorField>
         <MobileEditorField label="TV trả hộ">
           {hostedGuests.length > 0 ? (
@@ -548,12 +573,16 @@ export function SessionMemberSharesEditor({
           <div className="flex flex-wrap items-end justify-between gap-2">
             <Label>Chi phí theo người</Label>
             <p className="text-sm text-[var(--color-muted-foreground)]">
-              Chia sân + cầu:{" "}
+              Chia sân:{" "}
               <span className="font-number font-medium">
-                {formatVND(sharedBasePerPerson)}
+                {formatVND(perPerson.courtPerPerson)}
               </span>
-              / người
-              {totalAttendees > 0 && <> · {totalAttendees} người (gồm khách)</>}
+              / người · Chia cầu:{" "}
+              <span className="font-number font-medium">
+                {formatVND(perPerson.shuttlePerPerson)}
+              </span>
+              / người ({perPerson.shuttlePayers} người)
+              {totalAttendees > 0 && <> · {totalAttendees} người tham gia</>}
             </p>
           </div>
 
@@ -640,6 +669,7 @@ export function SessionMemberSharesEditor({
                       <TableHead className="text-right">Gửi xe</TableHead>
                       <TableHead className="text-right">Khác</TableHead>
                       <TableHead>Ghi chú thêm</TableHead>
+                      <TableHead className="text-center">Chia cầu</TableHead>
                       <TableHead className="text-center">TV trả hộ</TableHead>
                       <TableHead className="text-right">Tổng</TableHead>
                       <TableHead className="w-[4rem]" />
@@ -722,6 +752,19 @@ export function SessionMemberSharesEditor({
                                   })
                                 }
                               />
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <label className="inline-flex items-center gap-1">
+                                <Checkbox
+                                  checked={row.paysShuttleCost !== false}
+                                  onCheckedChange={(checked) =>
+                                    updateRow(row.memberId, {
+                                      paysShuttleCost: checked === true,
+                                    })
+                                  }
+                                  aria-label={`${member.name} chia cầu`}
+                                />
+                              </label>
                             </TableCell>
                             <TableCell className="text-center">
                               {hostedGuests.length > 0 ? (
@@ -823,6 +866,9 @@ export function SessionMemberSharesEditor({
                                 />
                               </TableCell>
                               <TableCell className="text-center text-xs text-[var(--color-muted-foreground)]">
+                                —
+                              </TableCell>
+                              <TableCell className="text-center text-xs text-[var(--color-muted-foreground)]">
                                 {row.memberPaysForGuests
                                   ? "TV trả"
                                   : "Trả trực tiếp"}
@@ -916,6 +962,9 @@ export function SessionMemberSharesEditor({
                           />
                         </TableCell>
                         <TableCell className="text-center text-xs text-[var(--color-muted-foreground)]">
+                          —
+                        </TableCell>
+                        <TableCell className="text-center text-xs text-[var(--color-muted-foreground)]">
                           Trả trực tiếp
                         </TableCell>
                         <TableCell>
@@ -993,6 +1042,7 @@ export function buildInitialShareAllocations(
     extra?: number;
     extraNote?: string | null;
     memberPaysForGuests?: boolean;
+    paysShuttleCost?: boolean;
   }[],
 ): ShareAllocationPayload[] {
   return shares.map((share) => ({
@@ -1004,6 +1054,7 @@ export function buildInitialShareAllocations(
     amount: share.amount,
     amountCustom: true,
     memberPaysForGuests: share.memberPaysForGuests ?? false,
+    paysShuttleCost: share.paysShuttleCost ?? true,
   }));
 }
 

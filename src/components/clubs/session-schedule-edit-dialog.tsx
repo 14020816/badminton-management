@@ -14,16 +14,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
+import { FormSelect } from "@/components/form/form-select";
 import { AddressFields } from "@/components/form/address-fields";
-import { updateSessionScheduleAction } from "@/actions/session-schedules";
 import {
-  WEEKDAY_OPTIONS,
-  formatScheduleTime,
-} from "@/lib/domain/schedule";
+  createSessionScheduleAction,
+  updateSessionScheduleAction,
+} from "@/actions/session-schedules";
+import { WEEKDAY_OPTIONS, formatScheduleTime } from "@/lib/domain/schedule";
 import { COURT_TYPE_LABELS, COURT_TYPES } from "@/lib/format";
-
-const selectClassName =
-  "flex h-10 w-full rounded-md border border-[var(--color-input)] bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]";
 
 export type EditableSchedule = {
   id: string;
@@ -36,23 +34,47 @@ export type EditableSchedule = {
   googleAddressUrl: string | null;
 };
 
-export function SessionScheduleEditDialog({
+export function SessionScheduleFormDialog({
   clubId,
   schedule,
+  mode,
   open,
   onOpenChange,
 }: {
   clubId: string;
   schedule: EditableSchedule | null;
+  mode: "add" | "edit";
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const [selectedWeekdays, setSelectedWeekdays] = useState<number[]>([]);
 
   useEffect(() => {
-    if (!schedule) return;
-    setSelectedWeekdays(schedule.weekdays);
-  }, [schedule]);
+    if (!open) return;
+    setSelectedWeekdays(mode === "edit" && schedule ? schedule.weekdays : []);
+  }, [mode, open, schedule]);
+
+  if (!open) return null;
+  if (mode === "edit" && !schedule) return null;
+
+  const defaults =
+    mode === "edit" && schedule
+      ? schedule
+      : {
+          startTime: "",
+          endTime: "",
+          courtType: "FIXED" as CourtType,
+          courtRental: 0,
+          address: null,
+          googleAddressUrl: null,
+        };
+
+  const action =
+    mode === "edit" && schedule
+      ? updateSessionScheduleAction.bind(null, clubId, schedule.id)
+      : createSessionScheduleAction.bind(null, clubId);
+
+  const formKey = mode === "edit" && schedule ? schedule.id : "add";
 
   function toggleWeekday(day: number) {
     setSelectedWeekdays((prev) =>
@@ -60,83 +82,88 @@ export function SessionScheduleEditDialog({
     );
   }
 
-  if (!schedule) return null;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Sửa lịch đánh</DialogTitle>
+          <DialogTitle>
+            {mode === "edit" ? "Sửa lịch đánh" : "Thêm lịch đánh cố định"}
+          </DialogTitle>
         </DialogHeader>
 
         <MutationForm
-          key={schedule.id}
-          action={updateSessionScheduleAction.bind(null, clubId, schedule.id)}
-          successMessage="Đã cập nhật lịch đánh"
+          key={formKey}
+          action={action}
+          successMessage={
+            mode === "edit" ? "Đã cập nhật lịch đánh" : "Đã thêm lịch đánh"
+          }
           onSuccess={() => onOpenChange(false)}
           className="space-y-4"
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor={`edit-schedule-start-${schedule.id}`} required>
+              <Label htmlFor={`schedule-start-${formKey}`} required>
                 Giờ bắt đầu
               </Label>
               <Input
-                id={`edit-schedule-start-${schedule.id}`}
+                id={`schedule-start-${formKey}`}
                 name="startTime"
                 type="time"
                 required
-                defaultValue={formatScheduleTime(schedule.startTime)}
+                defaultValue={
+                  defaults.startTime
+                    ? formatScheduleTime(defaults.startTime)
+                    : undefined
+                }
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor={`edit-schedule-end-${schedule.id}`} required>
+              <Label htmlFor={`schedule-end-${formKey}`} required>
                 Giờ kết thúc
               </Label>
               <Input
-                id={`edit-schedule-end-${schedule.id}`}
+                id={`schedule-end-${formKey}`}
                 name="endTime"
                 type="time"
                 required
-                defaultValue={formatScheduleTime(schedule.endTime)}
+                defaultValue={
+                  defaults.endTime
+                    ? formatScheduleTime(defaults.endTime)
+                    : undefined
+                }
               />
             </div>
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor={`edit-schedule-courtType-${schedule.id}`}>
-                Loại sân
-              </Label>
-              <select
-                id={`edit-schedule-courtType-${schedule.id}`}
+              <Label htmlFor={`schedule-courtType-${formKey}`}>Loại sân</Label>
+              <FormSelect
+                id={`schedule-courtType-${formKey}`}
                 name="courtType"
-                defaultValue={schedule.courtType}
-                className={selectClassName}
-              >
-                {COURT_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {COURT_TYPE_LABELS[type]}
-                  </option>
-                ))}
-              </select>
+                defaultValue={defaults.courtType}
+                options={COURT_TYPES.map((type) => ({
+                  value: type,
+                  label: COURT_TYPE_LABELS[type],
+                }))}
+              />
             </div>
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor={`edit-schedule-courtRental-${schedule.id}`} required>
+              <Label htmlFor={`schedule-courtRental-${formKey}`} required>
                 Thuê sân
               </Label>
               <Input
-                id={`edit-schedule-courtRental-${schedule.id}`}
+                id={`schedule-courtRental-${formKey}`}
                 name="courtRental"
                 type="number"
                 min={0}
                 required
-                defaultValue={schedule.courtRental}
+                defaultValue={defaults.courtRental}
               />
             </div>
           </div>
 
           <AddressFields
-            idPrefix={`edit-schedule-${schedule.id}-`}
-            defaultAddress={schedule.address ?? ""}
-            defaultGoogleAddressUrl={schedule.googleAddressUrl ?? ""}
+            idPrefix={`schedule-${formKey}-`}
+            defaultAddress={defaults.address ?? ""}
+            defaultGoogleAddressUrl={defaults.googleAddressUrl ?? ""}
           />
 
           <div className="space-y-2">
@@ -165,10 +192,10 @@ export function SessionScheduleEditDialog({
               Hủy
             </Button>
             <SubmitButton
-              pendingText="Đang lưu..."
+              pendingText={mode === "edit" ? "Đang lưu..." : "Đang thêm..."}
               disabled={selectedWeekdays.length === 0}
             >
-              Lưu thay đổi
+              {mode === "edit" ? "Lưu thay đổi" : "Thêm lịch"}
             </SubmitButton>
           </DialogFooter>
         </MutationForm>
@@ -176,3 +203,6 @@ export function SessionScheduleEditDialog({
     </Dialog>
   );
 }
+
+/** @deprecated Use SessionScheduleFormDialog */
+export const SessionScheduleEditDialog = SessionScheduleFormDialog;

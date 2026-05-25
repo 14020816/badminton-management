@@ -1,7 +1,9 @@
 "use client";
 
+import { useState, type ReactNode } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -26,7 +28,12 @@ import {
 } from "@/actions/transactions";
 import { PageHeader } from "@/components/layout/page-header";
 import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
+import { FormSelect } from "@/components/form/form-select";
 import { ConfirmDeleteButton } from "@/components/ui/confirm-delete-button";
+import {
+  TransactionEditDialog,
+  type EditableTransaction,
+} from "@/components/transactions/transaction-edit-dialog";
 import {
   EXPENSE_CATEGORY_LABELS,
   INCOME_CATEGORY_LABELS,
@@ -35,17 +42,44 @@ import {
 } from "@/lib/format";
 
 type Member = { id: string; name: string };
-type Transaction = {
-  id: string;
-  type: "EXPENSE" | "INCOME";
-  date: Date | null;
-  amount: number;
-  category: string;
-  description: string | null;
-  quantity: number | null;
-  note: string | null;
+type Transaction = EditableTransaction & {
   member: { name: string } | null;
 };
+
+function TransactionActions({
+  clubId,
+  transaction,
+  onEdit,
+  deleteTitle,
+  deleteDescription,
+}: {
+  clubId: string;
+  transaction: Transaction;
+  onEdit: (transaction: Transaction) => void;
+  deleteTitle: string;
+  deleteDescription: ReactNode;
+}) {
+  return (
+    <div className="flex shrink-0 gap-2">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => onEdit(transaction)}
+      >
+        Sửa
+      </Button>
+      <ConfirmDeleteButton
+        variant="destructive"
+        size="sm"
+        title={deleteTitle}
+        description={deleteDescription}
+        successMessage="Đã xóa giao dịch"
+        onConfirm={async () => deleteTransactionAction(clubId, transaction.id)}
+      />
+    </div>
+  );
+}
 
 export function TransactionsView({
   clubId,
@@ -60,6 +94,10 @@ export function TransactionsView({
   members: Member[];
   isAdmin: boolean;
 }) {
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(
+    null,
+  );
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -95,20 +133,14 @@ export function TransactionsView({
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="exp-category">Loại</Label>
-                    <select
+                    <FormSelect
                       id="exp-category"
                       name="category"
                       defaultValue="COURT_RENTAL"
-                      className="flex h-10 w-full rounded-md border border-[var(--color-input)] bg-transparent px-3 py-2 text-sm"
-                    >
-                      {Object.entries(EXPENSE_CATEGORY_LABELS).map(
-                        ([code, label]) => (
-                          <option key={code} value={code}>
-                            {label}
-                          </option>
-                        ),
+                      options={Object.entries(EXPENSE_CATEGORY_LABELS).map(
+                        ([code, label]) => ({ value: code, label }),
                       )}
-                    </select>
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="exp-quantity">Số lượng cầu</Label>
@@ -137,20 +169,17 @@ export function TransactionsView({
                         title={formatDate(tx.date)}
                         actions={
                           isAdmin ? (
-                            <ConfirmDeleteButton
-                              variant="destructive"
-                              size="sm"
-                              title="Xóa khoản chi?"
-                              description={
+                            <TransactionActions
+                              clubId={clubId}
+                              transaction={tx}
+                              onEdit={setEditingTransaction}
+                              deleteTitle="Xóa khoản chi?"
+                              deleteDescription={
                                 <>
                                   Khoản chi {formatVND(tx.amount)}
                                   {tx.description ? ` (${tx.description})` : ""}{" "}
                                   sẽ bị xóa. Hành động này không thể hoàn tác.
                                 </>
-                              }
-                              successMessage="Đã xóa giao dịch"
-                              onConfirm={async () =>
-                                deleteTransactionAction(clubId, tx.id)
                               }
                             />
                           ) : undefined
@@ -183,7 +212,7 @@ export function TransactionsView({
                         <TableHead>Loại</TableHead>
                         <TableHead>Mô tả</TableHead>
                         <TableHead className="text-right">Số tiền</TableHead>
-                        {isAdmin && <TableHead />}
+                        {isAdmin && <TableHead className="w-36">Thao tác</TableHead>}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -202,20 +231,17 @@ export function TransactionsView({
                           </TableCell>
                           {isAdmin && (
                             <TableCell>
-                              <ConfirmDeleteButton
-                                variant="destructive"
-                                size="sm"
-                                title="Xóa khoản chi?"
-                                description={
+                              <TransactionActions
+                                clubId={clubId}
+                                transaction={tx}
+                                onEdit={setEditingTransaction}
+                                deleteTitle="Xóa khoản chi?"
+                                deleteDescription={
                                   <>
                                     Khoản chi {formatVND(tx.amount)}
                                     {tx.description ? ` (${tx.description})` : ""}{" "}
                                     sẽ bị xóa. Hành động này không thể hoàn tác.
                                   </>
-                                }
-                                successMessage="Đã xóa giao dịch"
-                                onConfirm={async () =>
-                                  deleteTransactionAction(clubId, tx.id)
                                 }
                               />
                             </TableCell>
@@ -252,39 +278,27 @@ export function TransactionsView({
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="inc-member">Người đóng</Label>
-                    <select
+                    <FormSelect
                       id="inc-member"
                       name="memberId"
                       required
-                      defaultValue=""
-                      className="flex h-10 w-full rounded-md border border-[var(--color-input)] bg-transparent px-3 py-2 text-sm"
-                    >
-                      <option value="" disabled>
-                        Chọn lông thủ
-                      </option>
-                      {members.map((member) => (
-                        <option key={member.id} value={member.id}>
-                          {member.name}
-                        </option>
-                      ))}
-                    </select>
+                      placeholder="Chọn lông thủ"
+                      options={members.map((member) => ({
+                        value: member.id,
+                        label: member.name,
+                      }))}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="inc-category">Loại</Label>
-                    <select
+                    <FormSelect
                       id="inc-category"
                       name="category"
                       defaultValue="FUND_CONTRIBUTION"
-                      className="flex h-10 w-full rounded-md border border-[var(--color-input)] bg-transparent px-3 py-2 text-sm"
-                    >
-                      {Object.entries(INCOME_CATEGORY_LABELS).map(
-                        ([code, label]) => (
-                          <option key={code} value={code}>
-                            {label}
-                          </option>
-                        ),
+                      options={Object.entries(INCOME_CATEGORY_LABELS).map(
+                        ([code, label]) => ({ value: code, label }),
                       )}
-                    </select>
+                    />
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="inc-note">Ghi chú</Label>
@@ -309,21 +323,18 @@ export function TransactionsView({
                         title={formatDate(tx.date)}
                         actions={
                           isAdmin ? (
-                            <ConfirmDeleteButton
-                              variant="destructive"
-                              size="sm"
-                              title="Xóa khoản thu?"
-                              description={
+                            <TransactionActions
+                              clubId={clubId}
+                              transaction={tx}
+                              onEdit={setEditingTransaction}
+                              deleteTitle="Xóa khoản thu?"
+                              deleteDescription={
                                 <>
                                   Khoản thu {formatVND(tx.amount)}
                                   {tx.member?.name ? ` của ${tx.member.name}` : ""}
                                   {tx.note ? ` (${tx.note})` : ""} sẽ bị xóa.
                                   Hành động này không thể hoàn tác.
                                 </>
-                              }
-                              successMessage="Đã xóa giao dịch"
-                              onConfirm={async () =>
-                                deleteTransactionAction(clubId, tx.id)
                               }
                             />
                           ) : undefined
@@ -359,7 +370,7 @@ export function TransactionsView({
                         <TableHead>Loại</TableHead>
                         <TableHead>Ghi chú</TableHead>
                         <TableHead className="text-right">Số tiền</TableHead>
-                        {isAdmin && <TableHead />}
+                        {isAdmin && <TableHead className="w-36">Thao tác</TableHead>}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -376,21 +387,18 @@ export function TransactionsView({
                           </TableCell>
                           {isAdmin && (
                             <TableCell>
-                              <ConfirmDeleteButton
-                                variant="destructive"
-                                size="sm"
-                                title="Xóa khoản thu?"
-                                description={
+                              <TransactionActions
+                                clubId={clubId}
+                                transaction={tx}
+                                onEdit={setEditingTransaction}
+                                deleteTitle="Xóa khoản thu?"
+                                deleteDescription={
                                   <>
                                     Khoản thu {formatVND(tx.amount)}
                                     {tx.member?.name ? ` của ${tx.member.name}` : ""}
                                     {tx.note ? ` (${tx.note})` : ""} sẽ bị xóa.
                                     Hành động này không thể hoàn tác.
                                   </>
-                                }
-                                successMessage="Đã xóa giao dịch"
-                                onConfirm={async () =>
-                                  deleteTransactionAction(clubId, tx.id)
                                 }
                               />
                             </TableCell>
@@ -405,6 +413,16 @@ export function TransactionsView({
           </Card>
         </TabsContent>
       </Tabs>
+
+      <TransactionEditDialog
+        clubId={clubId}
+        transaction={editingTransaction}
+        members={members}
+        open={editingTransaction !== null}
+        onOpenChange={(open) => {
+          if (!open) setEditingTransaction(null);
+        }}
+      />
     </div>
   );
 }

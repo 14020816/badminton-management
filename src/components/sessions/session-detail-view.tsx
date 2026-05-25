@@ -40,6 +40,7 @@ export type SessionDetailData = {
   parking: number;
   shuttlesUsed: number;
   shuttleTypeId: string | null;
+  shuttlePricePerBlock: number | null;
   shuttleType: { id: string; name: string } | null;
   scheduleId: string | null;
   schedule: { id: string; startTime: string; endTime: string } | null;
@@ -57,6 +58,7 @@ export type SessionDetailData = {
     extra: number;
     extraNote: string | null;
     memberPaysForGuests: boolean;
+    paysShuttleCost: boolean;
   }[];
   guests: {
     id: string;
@@ -108,6 +110,7 @@ export function SessionDetailView({
     courtRental: session.courtRental,
     shuttlesUsed: session.shuttlesUsed,
     shuttleTypeId: session.shuttleTypeId,
+    shuttlePricePerBlock: session.shuttlePricePerBlock,
     scheduleId: session.scheduleId,
     address: session.address,
     googleAddressUrl: session.googleAddressUrl,
@@ -120,6 +123,7 @@ export function SessionDetailView({
       extra: share.extra,
       extraNote: share.extraNote,
       memberPaysForGuests: share.memberPaysForGuests,
+      paysShuttleCost: share.paysShuttleCost,
     })),
     guests: session.guests.map((guest) => ({
       id: guest.id,

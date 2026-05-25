@@ -195,3 +195,19 @@ export function getScheduleDateOptions(
 
   return [...past, ...future];
 }
+
+export function isSelectableScheduleDate(
+  date: Date,
+  schedule: { id: string; weekdays: number[] },
+  fulfilled: { scheduleId: string; date: Date | string }[],
+): boolean {
+  const normalized = new Date(date);
+  normalized.setHours(0, 0, 0, 0);
+  if (!schedule.weekdays.includes(normalized.getDay())) return false;
+
+  return !fulfilled.some(
+    (entry) =>
+      entry.scheduleId === schedule.id &&
+      isSameDay(new Date(entry.date), normalized),
+  );
+}

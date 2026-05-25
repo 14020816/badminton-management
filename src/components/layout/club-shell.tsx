@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { NavLinks } from "@/components/layout/nav-links";
 import { clubNavItems } from "@/components/layout/nav-items";
 import { LogoutButton } from "@/components/layout/logout-button";
+import { FormSelect } from "@/components/form/form-select";
 
 type ClubSummary = {
   clubId: string;
@@ -198,19 +199,16 @@ function ClubSwitcher({
   return (
     <div className={className}>
       <label className="mb-1 block text-xs text-[var(--muted)]">Chuyển nhóm</label>
-      <select
-        className="flex h-9 w-full rounded-md border border-[var(--hairline-on-dark)] bg-[var(--surface-card-dark)] px-2 text-sm text-[var(--body)]"
+      <FormSelect
         value={currentClubId}
-        onChange={(e) => {
-          window.location.href = `/g/${e.target.value}`;
+        onValueChange={(clubId) => {
+          window.location.href = `/g/${clubId}`;
         }}
-      >
-        {clubs.map((c) => (
-          <option key={c.clubId} value={c.clubId}>
-            {c.clubName}
-          </option>
-        ))}
-      </select>
+        options={clubs.map((club) => ({
+          value: club.clubId,
+          label: club.clubName,
+        }))}
+      />
     </div>
   );
 }

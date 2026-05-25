@@ -217,6 +217,7 @@ model PlaySession {
   schedule         SessionSchedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
   shuttleTypeId    String?
   shuttleType      ShuttleType?     @relation(fields: [shuttleTypeId], references: [id], onDelete: SetNull)
+  shuttlePricePerBlock Int?
   shuttlesUsed     Int              @default(0)
   courtRental      Int              @default(0)
   water            Int              @default(0)
@@ -247,6 +248,7 @@ model SessionShare {
   extra               Int         @default(0)
   extraNote           String?
   memberPaysForGuests Boolean     @default(false)
+  paysShuttleCost     Boolean     @default(true)
   session             PlaySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   member              Member      @relation(fields: [memberId], references: [id])
 

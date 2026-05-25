@@ -17,6 +17,35 @@ export function defaultShuttleTypeRow(): ShuttleTypeRow {
   };
 }
 
+export function parseShuttleTypeFormData(
+  formData: FormData,
+): Omit<ShuttleTypeRow, "id"> {
+  const name = String(formData.get("name") ?? "").trim();
+  const pricePerBlock = Number(formData.get("pricePerBlock") ?? 0);
+  const shuttlesPerBlock = Number(
+    formData.get("shuttlesPerBlock") ?? DEFAULT_SHUTTLES_PER_BLOCK,
+  );
+  const inventory = Number(formData.get("inventory") ?? 0);
+
+  if (!name) throw new Error("Vui lòng nhập tên loại cầu");
+  if (!Number.isFinite(pricePerBlock) || pricePerBlock < 0) {
+    throw new Error("Giá hộp không hợp lệ");
+  }
+  if (!Number.isFinite(shuttlesPerBlock) || shuttlesPerBlock <= 0) {
+    throw new Error("Số quả/hộp phải lớn hơn 0");
+  }
+  if (!Number.isFinite(inventory) || inventory < 0) {
+    throw new Error("Tồn kho không hợp lệ");
+  }
+
+  return {
+    name,
+    pricePerBlock: Math.round(pricePerBlock),
+    shuttlesPerBlock: Math.round(shuttlesPerBlock),
+    inventory: Math.round(inventory),
+  };
+}
+
 export function parseShuttleTypesPayload(raw: string): ShuttleTypeRow[] {
   let parsed: unknown;
   try {

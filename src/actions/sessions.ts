@@ -5,7 +5,6 @@ import { db } from "@/lib/db";
 import { requireClubAdmin, requireClubViewAccess } from "@/lib/club-context";
 import {
   calcSessionAllocations,
-  calcSharedSessionBase,
   parseGuestAllocations,
   parseShareAllocations,
   sumSessionShareTotals,
@@ -68,16 +67,26 @@ async function parseSessionFormData(clubId: string, formData: FormData) {
     throw new Error("Chưa cấu hình loại cầu. Vào Cài đặt để thêm loại cầu.");
   }
 
-  const sharedBase = calcSharedSessionBase({
+  const shuttlePricePerBlockRaw = String(
+    formData.get("shuttlePricePerBlock") ?? "",
+  ).trim();
+  const shuttlePricePerBlock = shuttlePricePerBlockRaw
+    ? Number(shuttlePricePerBlockRaw)
+    : shuttleType.pricePerBlock;
+  if (!Number.isFinite(shuttlePricePerBlock) || shuttlePricePerBlock < 0) {
+    throw new Error("Giá cầu không hợp lệ");
+  }
+
+  const costInput = {
     courtRental,
     shuttlesUsed,
     shuttlePricing: {
-      pricePerBlock: shuttleType.pricePerBlock,
+      pricePerBlock: shuttlePricePerBlock,
       shuttlesPerBlock: shuttleType.shuttlesPerBlock,
     },
-  });
+  };
   const { shares, guests } = calcSessionAllocations(
-    sharedBase,
+    costInput,
     memberInputs,
     guestInputs,
   );
@@ -93,6 +102,7 @@ async function parseSessionFormData(clubId: string, formData: FormData) {
     address,
     googleAddressUrl,
     shuttleType,
+    shuttlePricePerBlock,
     shuttlesUsed,
     courtRental,
     water,
@@ -154,6 +164,7 @@ export async function createSessionAction(clubId: string, formData: FormData) {
       courtType: parsed.courtType,
       scheduleId,
       shuttleTypeId: parsed.shuttleType.id,
+      shuttlePricePerBlock: parsed.shuttlePricePerBlock,
       shuttlesUsed: parsed.shuttlesUsed,
       courtRental: parsed.courtRental,
       water: parsed.water,
@@ -172,6 +183,7 @@ export async function createSessionAction(clubId: string, formData: FormData) {
           extra: share.extra,
           extraNote: share.extraNote,
           memberPaysForGuests: share.memberPaysForGuests,
+          paysShuttleCost: share.paysShuttleCost,
         })),
       },
       guests: {

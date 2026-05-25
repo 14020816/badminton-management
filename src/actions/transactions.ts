@@ -47,6 +47,61 @@ export async function createIncomeAction(clubId: string, formData: FormData) {
   clubPaths(clubId).forEach((p) => revalidatePath(p));
 }
 
+export async function updateExpenseAction(
+  clubId: string,
+  id: string,
+  formData: FormData,
+) {
+  await requireClubAdmin(clubId);
+
+  const tx = await db.transaction.findFirst({
+    where: { id, clubId, type: "EXPENSE", deletedAt: null },
+  });
+  if (!tx) throw new Error("Không tìm thấy giao dịch");
+
+  const dateRaw = String(formData.get("date") ?? "");
+  await db.transaction.update({
+    where: { id },
+    data: {
+      date: dateRaw ? new Date(dateRaw) : null,
+      amount: Number(formData.get("amount") ?? 0),
+      category: String(formData.get("category") ?? "OPTION"),
+      description: String(formData.get("description") ?? "") || null,
+      quantity: formData.get("quantity")
+        ? Number(formData.get("quantity"))
+        : null,
+    },
+  });
+
+  clubPaths(clubId).forEach((p) => revalidatePath(p));
+}
+
+export async function updateIncomeAction(
+  clubId: string,
+  id: string,
+  formData: FormData,
+) {
+  await requireClubAdmin(clubId);
+
+  const tx = await db.transaction.findFirst({
+    where: { id, clubId, type: "INCOME", deletedAt: null },
+  });
+  if (!tx) throw new Error("Không tìm thấy giao dịch");
+
+  await db.transaction.update({
+    where: { id },
+    data: {
+      date: new Date(String(formData.get("date"))),
+      amount: Number(formData.get("amount") ?? 0),
+      category: String(formData.get("category") ?? "FUND_CONTRIBUTION"),
+      memberId: String(formData.get("memberId")),
+      note: String(formData.get("note") ?? "") || null,
+    },
+  });
+
+  clubPaths(clubId).forEach((p) => revalidatePath(p));
+}
+
 export async function deleteTransactionAction(clubId: string, id: string) {
   await requireClubAdmin(clubId);
   const tx = await db.transaction.findFirst({ where: { id, clubId } });

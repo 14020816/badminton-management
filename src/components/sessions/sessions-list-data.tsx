@@ -38,6 +38,7 @@ type SessionRow = {
   guests: SessionParticipantsData["guests"];
   courtRental: number;
   shuttleTypeId: string | null;
+  shuttlePricePerBlock: number | null;
   scheduleId: string | null;
   address: string | null;
   googleAddressUrl: string | null;
@@ -62,6 +63,7 @@ function toEditableSession(session: SessionRow): EditableSession {
     courtRental: session.courtRental,
     shuttlesUsed: session.shuttlesUsed,
     shuttleTypeId: session.shuttleTypeId,
+    shuttlePricePerBlock: session.shuttlePricePerBlock,
     scheduleId: session.scheduleId,
     address: session.address,
     googleAddressUrl: session.googleAddressUrl,
@@ -74,6 +76,7 @@ function toEditableSession(session: SessionRow): EditableSession {
       extra: share.extra,
       extraNote: share.extraNote,
       memberPaysForGuests: share.memberPaysForGuests,
+      paysShuttleCost: share.paysShuttleCost,
     })),
     guests: session.guests.map((guest) => ({
       id: guest.id,

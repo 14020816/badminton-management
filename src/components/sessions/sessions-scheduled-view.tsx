@@ -9,8 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/layout/page-header";
 import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
+import { FormSelect } from "@/components/form/form-select";
 import { AddressDisplay } from "@/components/form/address-fields";
 import { SessionMemberSharesEditor } from "@/components/sessions/session-member-shares-editor";
+import { ScheduleDatePicker } from "@/components/sessions/schedule-date-picker";
 import { createSessionAction } from "@/actions/sessions";
 import type {
   GuestAllocationPayload,
@@ -20,9 +22,8 @@ import {
   formatScheduleLabel,
   formatScheduleTimeRange,
   formatWeekdays,
-  getScheduleDateOptions,
 } from "@/lib/domain/schedule";
-import { formatCourtType } from "@/lib/format";
+import { formatCourtType, formatVND } from "@/lib/format";
 
 type Member = { id: string; name: string };
 type ShuttleTypeOption = {
@@ -46,9 +47,6 @@ type FulfilledSession = {
   date: string;
 };
 
-const selectClassName =
-  "flex h-10 w-full rounded-md border border-[var(--color-input)] bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]";
-
 export function SessionsScheduledView({
   clubId,
   schedules,
@@ -70,6 +68,9 @@ export function SessionsScheduledView({
   );
   const [shuttlesUsed, setShuttlesUsed] = useState(0);
   const [shuttleTypeId, setShuttleTypeId] = useState(shuttleTypes[0]?.id ?? "");
+  const [shuttlePricePerBlock, setShuttlePricePerBlock] = useState(
+    shuttleTypes[0]?.pricePerBlock ?? 0,
+  );
   const [allocations, setAllocations] = useState<ShareAllocationPayload[]>([]);
   const [guests, setGuests] = useState<GuestAllocationPayload[]>([]);
 
@@ -78,41 +79,34 @@ export function SessionsScheduledView({
     [schedules, scheduleId],
   );
 
-  const dateOptions = useMemo(() => {
-    if (!selectedSchedule) return [];
-    return getScheduleDateOptions(selectedSchedule, fulfilled, {
-      futureCount: 5,
-    });
-  }, [selectedSchedule, fulfilled]);
-
-  const pastDates = dateOptions.filter((option) => option.isPast);
-  const futureDates = dateOptions.filter((option) => !option.isPast);
-
-  const shuttlePricing = useMemo(() => {
-    const type =
+  const selectedShuttleType = useMemo(
+    () =>
       shuttleTypes.find((option) => option.id === shuttleTypeId) ??
-      shuttleTypes[0];
-    return {
-      pricePerBlock: type?.pricePerBlock ?? 0,
-      shuttlesPerBlock: type?.shuttlesPerBlock ?? 12,
-    };
-  }, [shuttleTypeId, shuttleTypes]);
+      shuttleTypes[0] ??
+      null,
+    [shuttleTypeId, shuttleTypes],
+  );
+
+  const shuttlePricing = useMemo(
+    () => ({
+      pricePerBlock: shuttlePricePerBlock,
+      shuttlesPerBlock: selectedShuttleType?.shuttlesPerBlock ?? 12,
+    }),
+    [selectedShuttleType, shuttlePricePerBlock],
+  );
 
   useEffect(() => {
     if (selectedSchedule) {
       setCourtRental(selectedSchedule.courtRental);
+      setDate("");
     }
   }, [selectedSchedule]);
 
   useEffect(() => {
-    if (dateOptions.length === 0) {
-      setDate("");
-      return;
+    if (selectedShuttleType) {
+      setShuttlePricePerBlock(selectedShuttleType.pricePerBlock);
     }
-    if (!dateOptions.some((option) => option.value === date)) {
-      setDate(dateOptions[0]?.value ?? "");
-    }
-  }, [dateOptions, date]);
+  }, [selectedShuttleType]);
 
   if (schedules.length === 0) {
     return (
@@ -159,68 +153,35 @@ export function SessionsScheduledView({
               className="space-y-4"
               onSuccess={() => {
                 setAllocations([]);
+                setGuests([]);
                 router.refresh();
               }}
             >
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 lg:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="scheduleId" required>
                     Lịch đánh
                   </Label>
-                  <select
+                  <FormSelect
                     id="scheduleId"
                     name="scheduleId"
                     required
                     value={scheduleId}
-                    onChange={(e) => setScheduleId(e.target.value)}
-                    className={selectClassName}
-                  >
-                    {schedules.map((schedule) => (
-                      <option key={schedule.id} value={schedule.id}>
-                        {formatScheduleLabel(schedule)}
-                      </option>
-                    ))}
-                  </select>
+                    onValueChange={setScheduleId}
+                    options={schedules.map((schedule) => ({
+                      value: schedule.id,
+                      label: formatScheduleLabel(schedule),
+                    }))}
+                  />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="scheduled-date" required>
-                    Ngày
-                  </Label>
-                  <select
-                    id="scheduled-date"
-                    name="date"
-                    required
+                {selectedSchedule && (
+                  <ScheduleDatePicker
+                    schedule={selectedSchedule}
+                    fulfilled={fulfilled}
                     value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    disabled={dateOptions.length === 0}
-                    className={selectClassName}
-                  >
-                    {dateOptions.length === 0 ? (
-                      <option value="">Không còn ngày cần ghi</option>
-                    ) : (
-                      <>
-                        {pastDates.length > 0 && (
-                          <optgroup label="Chưa ghi (quá khứ)">
-                            {pastDates.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </optgroup>
-                        )}
-                        {futureDates.length > 0 && (
-                          <optgroup label="Sắp tới">
-                            {futureDates.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </optgroup>
-                        )}
-                      </>
-                    )}
-                  </select>
-                </div>
+                    onChange={setDate}
+                  />
+                )}
               </div>
 
               {selectedSchedule && (
@@ -289,24 +250,42 @@ export function SessionsScheduledView({
                     }
                   />
                 </div>
-                <div className="space-y-2 sm:col-span-2">
+                <div className="space-y-2">
                   <Label htmlFor="scheduled-shuttleTypeId" required>
                     Loại cầu
                   </Label>
-                  <select
+                  <FormSelect
                     id="scheduled-shuttleTypeId"
                     name="shuttleTypeId"
                     required
                     value={shuttleTypeId}
-                    onChange={(event) => setShuttleTypeId(event.target.value)}
-                    className={selectClassName}
-                  >
-                    {shuttleTypes.map((type) => (
-                      <option key={type.id} value={type.id}>
-                        {type.name} ({type.shuttlesPerBlock} quả/hộp)
-                      </option>
-                    ))}
-                  </select>
+                    onValueChange={setShuttleTypeId}
+                    options={shuttleTypes.map((type) => ({
+                      value: type.id,
+                      label: `${type.name} (${type.shuttlesPerBlock} quả/hộp)`,
+                    }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="scheduled-shuttlePricePerBlock" required>
+                    Giá cầu (một hộp)
+                  </Label>
+                  <Input
+                    id="scheduled-shuttlePricePerBlock"
+                    name="shuttlePricePerBlock"
+                    type="number"
+                    min={0}
+                    required
+                    value={shuttlePricePerBlock}
+                    onChange={(event) =>
+                      setShuttlePricePerBlock(Number(event.target.value) || 0)
+                    }
+                  />
+                  {selectedShuttleType && (
+                    <p className="text-xs text-[var(--color-muted-foreground)]">
+                      Mặc định từ loại cầu: {formatVND(selectedShuttleType.pricePerBlock)}
+                    </p>
+                  )}
                 </div>
               </div>
 

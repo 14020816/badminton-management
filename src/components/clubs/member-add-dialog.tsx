@@ -11,11 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
+import { FormSelect } from "@/components/form/form-select";
 import { createMemberAction } from "@/actions/members";
 import { MEMBER_RANKS } from "@/lib/domain/member";
-
-const selectClassName =
-  "flex h-10 w-full rounded-md border border-[var(--color-input)] bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]";
 
 export function MemberAddDialog({
   clubId,
@@ -51,14 +49,16 @@ export function MemberAddDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="add-member-rank">Hạng</Label>
-            <select id="add-member-rank" name="rank" defaultValue="" className={selectClassName}>
-              <option value="">Chưa xếp hạng</option>
-              {MEMBER_RANKS.map((rank) => (
-                <option key={rank} value={rank}>
-                  {rank}
-                </option>
-              ))}
-            </select>
+            <FormSelect
+              id="add-member-rank"
+              name="rank"
+              defaultValue=""
+              placeholder="Chưa xếp hạng"
+              options={[
+                { value: "", label: "Chưa xếp hạng" },
+                ...MEMBER_RANKS.map((rank) => ({ value: rank, label: rank })),
+              ]}
+            />
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
