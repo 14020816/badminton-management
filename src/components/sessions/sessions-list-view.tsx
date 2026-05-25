@@ -5,19 +5,9 @@ import type { CourtType } from "@prisma/client";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { SessionsListData } from "@/components/sessions/sessions-list-data";
 import { PageHeader } from "@/components/layout/page-header";
-import { formatCourtType, formatSessionDate, formatVND } from "@/lib/format";
 import {
-  buildSessionDetailPath,
   buildSessionListPath,
   hasActiveSessionListFilters,
   type SessionListFilters,
@@ -30,7 +20,6 @@ import {
 import { SessionDeleteDialog } from "@/components/sessions/session-delete-dialog";
 import {
   SessionParticipantsDialog,
-  summarizeSessionParticipants,
   type SessionParticipantsData,
 } from "@/components/sessions/session-participants-dialog";
 
@@ -151,181 +140,20 @@ export function SessionsListView({
             showMemberFilter={showMemberFilter}
           />
 
-          <Table minWidth="40rem">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Ngày</TableHead>
-                <TableHead>Loại sân</TableHead>
-                <TableHead className="hidden md:table-cell">Loại cầu</TableHead>
-                <TableHead className="min-w-[7rem]">Người tham gia</TableHead>
-                <TableHead className="text-right">Mỗi người</TableHead>
-                <TableHead className="text-right">Tổng</TableHead>
-                <TableHead className="hidden sm:table-cell">Ghi chú</TableHead>
-                {isAdmin && <TableHead className="w-[8.5rem]">Thao tác</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sessions.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={isAdmin ? 8 : 7}
-                    className="py-8 text-center text-[var(--color-muted-foreground)]"
-                  >
-                    {hasFilters ? "Không có kết quả phù hợp" : "Chưa có buổi đánh nào"}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                sessions.map((session) => (
-                  <TableRow key={session.id}>
-                    <TableCell>
-                      <Link
-                        href={buildSessionDetailPath(clubId, session.id)}
-                        className="font-medium text-[var(--primary)] hover:text-[var(--primary-active)] hover:underline"
-                      >
-                        {formatSessionDate(session.date)}
-                      </Link>
-                    </TableCell>
-                    <TableCell>{formatCourtType(session.courtType)}</TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {session.shuttleType?.name ?? "—"}
-                      {session.shuttlesUsed > 0 && (
-                        <span className="block text-xs text-[var(--color-muted-foreground)]">
-                          {session.shuttlesUsed} quả
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {(() => {
-                        const { memberCount, guestCount, total } =
-                          summarizeSessionParticipants(session);
-                        return (
-                          <div className="flex flex-col gap-1.5">
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              <span className="text-sm">
-                                {memberCount} thành viên
-                              </span>
-                              {guestCount > 0 && (
-                                <Badge variant="secondary">
-                                  {guestCount} khách
-                                </Badge>
-                              )}
-                            </div>
-                            <span className="text-xs text-[var(--color-muted-foreground)]">
-                              {total} người tham gia
-                            </span>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="h-7 w-fit px-2 text-xs"
-                              onClick={() =>
-                                setViewingParticipants({
-                                  date: session.date,
-                                  courtType: session.courtType,
-                                  shuttleTypeName: session.shuttleType?.name,
-                                  shuttlesUsed: session.shuttlesUsed,
-                                  totalCost: session.totalCost,
-                                  shares: session.shares,
-                                  guests: session.guests,
-                                })
-                              }
-                            >
-                              Chi tiết
-                            </Button>
-                          </div>
-                        );
-                      })()}
-                    </TableCell>
-                    <TableCell className="font-number text-right">
-                      {(() => {
-                        const amounts = [
-                          ...session.shares
-                            .filter((share) => share.amount > 0)
-                            .map((share) => share.amount),
-                          ...session.guests
-                            .filter((guest) => guest.amount > 0)
-                            .map((guest) => guest.amount),
-                        ];
-                        if (amounts.length === 0) {
-                          return formatVND(session.costPerPerson);
-                        }
-                        const min = Math.min(...amounts);
-                        const max = Math.max(...amounts);
-                        return min === max
-                          ? formatVND(min)
-                          : `${formatVND(min)} – ${formatVND(max)}`;
-                      })()}
-                    </TableCell>
-                    <TableCell className="font-number text-right">
-                      {formatVND(session.totalCost)}
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      {session.note ?? "—"}
-                    </TableCell>
-                    {isAdmin && (
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              setEditingSession({
-                                id: session.id,
-                                date: session.date,
-                                courtType: session.courtType,
-                                courtRental: session.courtRental,
-                                shuttlesUsed: session.shuttlesUsed,
-                                shuttleTypeId: session.shuttleTypeId,
-                                scheduleId: session.scheduleId,
-                                address: session.address,
-                                googleAddressUrl: session.googleAddressUrl,
-                                note: session.note,
-                                shares: session.shares.map((share) => ({
-                                  memberId: share.memberId,
-                                  amount: share.amount,
-                                  water: share.water,
-                                  parking: share.parking,
-                                  extra: share.extra,
-                                  extraNote: share.extraNote,
-                                  memberPaysForGuests: share.memberPaysForGuests,
-                                })),
-                                guests: session.guests.map((guest) => ({
-                                  id: guest.id,
-                                  name: guest.name,
-                                  amount: guest.amount,
-                                  water: guest.water,
-                                  parking: guest.parking,
-                                  extra: guest.extra,
-                                  extraNote: guest.extraNote,
-                                  hostedByMemberId: guest.hostedByMemberId,
-                                })),
-                              })
-                            }
-                          >
-                            Sửa
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="sm"
-                            onClick={() =>
-                              setDeletingSession({
-                                id: session.id,
-                                date: session.date,
-                              })
-                            }
-                          >
-                            Xóa
-                          </Button>
-                        </div>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+          {sessions.length === 0 ? (
+            <p className="py-8 text-center text-sm text-[var(--color-muted-foreground)]">
+              {hasFilters ? "Không có kết quả phù hợp" : "Chưa có buổi đánh nào"}
+            </p>
+          ) : (
+            <SessionsListData
+              clubId={clubId}
+              sessions={sessions}
+              isAdmin={isAdmin}
+              onEdit={setEditingSession}
+              onDelete={setDeletingSession}
+              onViewParticipants={setViewingParticipants}
+            />
+          )}
 
           {total > 0 && (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

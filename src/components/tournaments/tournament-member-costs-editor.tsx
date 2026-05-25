@@ -19,6 +19,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  MobileDataCard,
+  MobileDataField,
+  MobileDataFields,
+  MobileDataList,
+  MobileEditorField,
+  ResponsiveDataView,
+} from "@/components/ui/mobile-data-list";
+import {
   buildTournamentSurplusIncomeNote,
   calcTournamentExpenseTotal,
   calcTournamentMemberAmount,
@@ -167,125 +175,241 @@ export function TournamentMemberCostsEditor({
       {allocations.length > 0 && (
         <div className="space-y-3">
           <Label>Chi phí từng người</Label>
-          <div className="overflow-x-auto rounded-md border">
-            <Table minWidth="44rem">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Thành viên</TableHead>
-                  <TableHead className="text-right">Phần chia</TableHead>
-                  <TableHead className="text-right">Chi phí thêm</TableHead>
-                  <TableHead className="text-right">Đã chi</TableHead>
-                  <TableHead>Ghi chú</TableHead>
-                  <TableHead className="text-right">Tổng</TableHead>
-                  <TableHead className="text-center">Tính vào quỹ</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {allocations.map((row) => {
-                  const member = members.find(
-                    (item) => item.id === row.memberId,
-                  );
-                  if (!member) return null;
+          <div className="rounded-md border">
+            <ResponsiveDataView
+              mobile={
+                <MobileDataList className="p-2">
+                  {allocations.map((row) => {
+                    const member = members.find(
+                      (item) => item.id === row.memberId,
+                    );
+                    if (!member) return null;
 
-                  const memberPaidExpense = paidByMember.get(row.memberId) ?? 0;
-                  const total = calcTournamentMemberAmount({
-                    shareCost: row.shareCost,
-                    additionalCost: row.additionalCost,
-                    memberPaidExpense,
-                  });
-                  const credit = calcTournamentMemberCredit(total);
+                    const memberPaidExpense = paidByMember.get(row.memberId) ?? 0;
+                    const total = calcTournamentMemberAmount({
+                      shareCost: row.shareCost,
+                      additionalCost: row.additionalCost,
+                      memberPaidExpense,
+                    });
+                    const credit = calcTournamentMemberCredit(total);
 
-                  return (
-                    <Fragment key={row.memberId}>
-                      <TableRow>
-                        <TableCell className="font-medium">
-                          {member.name}
-                        </TableCell>
-                        <TableCell className="font-number text-right">
-                          {formatVND(row.shareCost)}
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min={0}
-                            value={row.additionalCost}
-                            onChange={(event) =>
-                              updateRow(row.memberId, {
-                                additionalCost: Number(event.target.value) || 0,
-                              })
-                            }
-                            className="font-number text-right"
-                          />
-                        </TableCell>
-                        <TableCell className="font-number text-right text-[var(--color-muted-foreground)]">
-                          {memberPaidExpense > 0
-                            ? `-${formatVND(memberPaidExpense)}`
-                            : "—"}
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={row.additionalNote ?? ""}
-                            placeholder="VD: Thua kèo bia"
-                            onChange={(event) =>
-                              updateRow(row.memberId, {
-                                additionalNote: event.target.value || null,
-                              })
-                            }
-                          />
-                        </TableCell>
-                        <TableCell
-                          className={`font-number text-right font-medium ${total < 0 ? "text-[var(--color-success)]" : ""}`}
-                        >
-                          {formatVND(total)}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {credit > 0 ? (
-                            "—"
-                          ) : (
-                            <Checkbox
-                              checked={row.countsToBudget}
-                              onCheckedChange={(checked) =>
-                                updateRow(row.memberId, {
-                                  countsToBudget: checked === true,
-                                })
-                              }
-                              disabled={total === 0}
-                              aria-label={`Tính vào quỹ cho ${member.name}`}
-                            />
-                          )}
-                        </TableCell>
-                      </TableRow>
-                      {credit > 0 && (
-                        <TableRow>
-                          <TableCell colSpan={7} className="pt-0">
-                            <label className="flex items-start gap-2 text-sm">
-                              <Checkbox
-                                checked={row.countsToBudget}
-                                onCheckedChange={(checked) =>
+                    return (
+                      <Fragment key={row.memberId}>
+                        <MobileDataCard title={member.name}>
+                          <div className="space-y-3">
+                            <MobileDataFields columns={2}>
+                              <MobileDataField
+                                label="Phần chia"
+                                valueClassName="font-number text-right"
+                              >
+                                {formatVND(row.shareCost)}
+                              </MobileDataField>
+                              <MobileDataField
+                                label="Đã chi"
+                                valueClassName="font-number text-right text-[var(--color-muted-foreground)]"
+                              >
+                                {memberPaidExpense > 0
+                                  ? `-${formatVND(memberPaidExpense)}`
+                                  : "—"}
+                              </MobileDataField>
+                            </MobileDataFields>
+                            <MobileEditorField label="Chi phí thêm">
+                              <Input
+                                type="number"
+                                min={0}
+                                value={row.additionalCost}
+                                onChange={(event) =>
                                   updateRow(row.memberId, {
-                                    countsToBudget: checked === true,
+                                    additionalCost:
+                                      Number(event.target.value) || 0,
+                                  })
+                                }
+                                className="font-number text-right"
+                              />
+                            </MobileEditorField>
+                            <MobileEditorField label="Ghi chú">
+                              <Input
+                                value={row.additionalNote ?? ""}
+                                placeholder="VD: Thua kèo bia"
+                                onChange={(event) =>
+                                  updateRow(row.memberId, {
+                                    additionalNote: event.target.value || null,
                                   })
                                 }
                               />
-                              <span>
-                                Chi nhiều hơn phần phải trả. Tạo khoản thu{" "}
-                                <span className="font-number font-medium">
-                                  {formatVND(credit)}
-                                </span>{" "}
-                                cho {member.name}
-                                {surplusIncomeNote
-                                  ? ` (${surplusIncomeNote})`
-                                  : ""}
-                              </span>
-                            </label>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </Fragment>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                            </MobileEditorField>
+                            <MobileDataField
+                              label="Tổng"
+                              valueClassName={`font-number font-medium ${total < 0 ? "text-[var(--color-success)]" : ""}`}
+                            >
+                              {formatVND(total)}
+                            </MobileDataField>
+                            {credit > 0 ? (
+                              <label className="flex items-start gap-2 text-sm">
+                                <Checkbox
+                                  checked={row.countsToBudget}
+                                  onCheckedChange={(checked) =>
+                                    updateRow(row.memberId, {
+                                      countsToBudget: checked === true,
+                                    })
+                                  }
+                                />
+                                <span>
+                                  Chi nhiều hơn phần phải trả. Tạo khoản thu{" "}
+                                  <span className="font-number font-medium">
+                                    {formatVND(credit)}
+                                  </span>{" "}
+                                  cho {member.name}
+                                  {surplusIncomeNote
+                                    ? ` (${surplusIncomeNote})`
+                                    : ""}
+                                </span>
+                              </label>
+                            ) : (
+                              <MobileEditorField label="Tính vào quỹ">
+                                <label className="flex items-center gap-2">
+                                  <Checkbox
+                                    checked={row.countsToBudget}
+                                    onCheckedChange={(checked) =>
+                                      updateRow(row.memberId, {
+                                        countsToBudget: checked === true,
+                                      })
+                                    }
+                                    disabled={total === 0}
+                                    aria-label={`Tính vào quỹ cho ${member.name}`}
+                                  />
+                                  <span className="text-sm">Tính vào quỹ</span>
+                                </label>
+                              </MobileEditorField>
+                            )}
+                          </div>
+                        </MobileDataCard>
+                      </Fragment>
+                    );
+                  })}
+                </MobileDataList>
+              }
+              desktop={
+                <Table minWidth="44rem">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Thành viên</TableHead>
+                      <TableHead className="text-right">Phần chia</TableHead>
+                      <TableHead className="text-right">Chi phí thêm</TableHead>
+                      <TableHead className="text-right">Đã chi</TableHead>
+                      <TableHead>Ghi chú</TableHead>
+                      <TableHead className="text-right">Tổng</TableHead>
+                      <TableHead className="text-center">Tính vào quỹ</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {allocations.map((row) => {
+                      const member = members.find(
+                        (item) => item.id === row.memberId,
+                      );
+                      if (!member) return null;
+
+                      const memberPaidExpense = paidByMember.get(row.memberId) ?? 0;
+                      const total = calcTournamentMemberAmount({
+                        shareCost: row.shareCost,
+                        additionalCost: row.additionalCost,
+                        memberPaidExpense,
+                      });
+                      const credit = calcTournamentMemberCredit(total);
+
+                      return (
+                        <Fragment key={row.memberId}>
+                          <TableRow>
+                            <TableCell className="font-medium">
+                              {member.name}
+                            </TableCell>
+                            <TableCell className="font-number text-right">
+                              {formatVND(row.shareCost)}
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                min={0}
+                                value={row.additionalCost}
+                                onChange={(event) =>
+                                  updateRow(row.memberId, {
+                                    additionalCost: Number(event.target.value) || 0,
+                                  })
+                                }
+                                className="font-number text-right"
+                              />
+                            </TableCell>
+                            <TableCell className="font-number text-right text-[var(--color-muted-foreground)]">
+                              {memberPaidExpense > 0
+                                ? `-${formatVND(memberPaidExpense)}`
+                                : "—"}
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                value={row.additionalNote ?? ""}
+                                placeholder="VD: Thua kèo bia"
+                                onChange={(event) =>
+                                  updateRow(row.memberId, {
+                                    additionalNote: event.target.value || null,
+                                  })
+                                }
+                              />
+                            </TableCell>
+                            <TableCell
+                              className={`font-number text-right font-medium ${total < 0 ? "text-[var(--color-success)]" : ""}`}
+                            >
+                              {formatVND(total)}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {credit > 0 ? (
+                                "—"
+                              ) : (
+                                <Checkbox
+                                  checked={row.countsToBudget}
+                                  onCheckedChange={(checked) =>
+                                    updateRow(row.memberId, {
+                                      countsToBudget: checked === true,
+                                    })
+                                  }
+                                  disabled={total === 0}
+                                  aria-label={`Tính vào quỹ cho ${member.name}`}
+                                />
+                              )}
+                            </TableCell>
+                          </TableRow>
+                          {credit > 0 && (
+                            <TableRow>
+                              <TableCell colSpan={7} className="pt-0">
+                                <label className="flex items-start gap-2 text-sm">
+                                  <Checkbox
+                                    checked={row.countsToBudget}
+                                    onCheckedChange={(checked) =>
+                                      updateRow(row.memberId, {
+                                        countsToBudget: checked === true,
+                                      })
+                                    }
+                                  />
+                                  <span>
+                                    Chi nhiều hơn phần phải trả. Tạo khoản thu{" "}
+                                    <span className="font-number font-medium">
+                                      {formatVND(credit)}
+                                    </span>{" "}
+                                    cho {member.name}
+                                    {surplusIncomeNote
+                                      ? ` (${surplusIncomeNote})`
+                                      : ""}
+                                  </span>
+                                </label>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </Fragment>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              }
+            />
           </div>
 
           <p className="text-sm text-[var(--color-muted-foreground)]">

@@ -20,6 +20,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  MobileDataCard,
+  MobileDataList,
+  MobileEditorField,
+  ResponsiveDataView,
+} from "@/components/ui/mobile-data-list";
+import {
   attendeeCount,
   calcCostPerPerson,
   calcSessionAllocations,
@@ -324,6 +330,199 @@ export function SessionMemberSharesEditor({
 
   const standaloneGuests = guests.filter((guest) => !guest.hostedByMemberId);
 
+  function renderMemberEditorFields(
+    row: ShareAllocationPayload,
+    memberName: string,
+    hostedGuests: GuestAllocationPayload[],
+  ) {
+    return (
+      <div className="space-y-3">
+        <Button
+          type="button"
+          variant="default"
+          size="sm"
+          className="h-7 px-2 text-xs"
+          onClick={() => addHostedGuest(row.memberId)}
+        >
+          + Thêm khách đi cùng
+        </Button>
+        <MobileEditorField label="Nước">
+          <Input
+            type="number"
+            min={0}
+            value={row.water}
+            onChange={(event) =>
+              updateRow(row.memberId, {
+                water: Number(event.target.value) || 0,
+              })
+            }
+            className="font-number text-right"
+          />
+        </MobileEditorField>
+        <MobileEditorField label="Gửi xe">
+          <Input
+            type="number"
+            min={0}
+            value={row.parking}
+            onChange={(event) =>
+              updateRow(row.memberId, {
+                parking: Number(event.target.value) || 0,
+              })
+            }
+            className="font-number text-right"
+          />
+        </MobileEditorField>
+        <MobileEditorField label="Khác">
+          <Input
+            type="number"
+            min={0}
+            value={row.extra}
+            onChange={(event) =>
+              updateRow(row.memberId, {
+                extra: Number(event.target.value) || 0,
+              })
+            }
+            className="font-number text-right"
+          />
+        </MobileEditorField>
+        <MobileEditorField label="Ghi chú thêm">
+          <Input
+            value={row.extraNote ?? ""}
+            placeholder="VD: Option"
+            onChange={(event) =>
+              updateRow(row.memberId, {
+                extraNote: event.target.value || null,
+              })
+            }
+          />
+        </MobileEditorField>
+        <MobileEditorField label="TV trả hộ">
+          {hostedGuests.length > 0 ? (
+            <label className="flex items-center gap-2">
+              <Checkbox
+                checked={row.memberPaysForGuests ?? false}
+                onCheckedChange={(checked) =>
+                  updateRow(row.memberId, {
+                    memberPaysForGuests: checked === true,
+                  })
+                }
+                aria-label={`Thành viên trả hộ khách của ${memberName}`}
+              />
+              <span className="text-sm">Thành viên trả hộ khách</span>
+            </label>
+          ) : (
+            <span className="text-xs text-[var(--color-muted-foreground)]">—</span>
+          )}
+        </MobileEditorField>
+        <MobileEditorField label="Tổng">
+          <Input
+            type="number"
+            disabled
+            min={0}
+            value={row.amount ?? 0}
+            className="font-number text-right"
+          />
+        </MobileEditorField>
+      </div>
+    );
+  }
+
+  function renderGuestEditorFields(
+    guest: GuestAllocationPayload,
+    options: {
+      memberPaysForGuests?: boolean;
+      paymentLabel: string;
+    },
+  ) {
+    const disabled = options.memberPaysForGuests ?? false;
+
+    return (
+      <div className="space-y-3">
+        <MobileEditorField label="Tên">
+          <Input
+            value={guest.name}
+            placeholder={
+              guest.hostedByMemberId
+                ? "Tên khách (bạn, người nhà...)"
+                : "Tên khách không phải thành viên"
+            }
+            onChange={(event) =>
+              updateGuest(guest.clientId, { name: event.target.value })
+            }
+          />
+        </MobileEditorField>
+        <MobileEditorField label="Nước">
+          <Input
+            type="number"
+            min={0}
+            value={guest.water}
+            disabled={disabled}
+            onChange={(event) =>
+              updateGuest(guest.clientId, {
+                water: Number(event.target.value) || 0,
+              })
+            }
+            className="font-number text-right"
+          />
+        </MobileEditorField>
+        <MobileEditorField label="Gửi xe">
+          <Input
+            type="number"
+            min={0}
+            value={guest.parking}
+            disabled={disabled}
+            onChange={(event) =>
+              updateGuest(guest.clientId, {
+                parking: Number(event.target.value) || 0,
+              })
+            }
+            className="font-number text-right"
+          />
+        </MobileEditorField>
+        <MobileEditorField label="Khác">
+          <Input
+            type="number"
+            min={0}
+            value={guest.extra}
+            disabled={disabled}
+            onChange={(event) =>
+              updateGuest(guest.clientId, {
+                extra: Number(event.target.value) || 0,
+              })
+            }
+            className="font-number text-right"
+          />
+        </MobileEditorField>
+        <MobileEditorField label="Ghi chú">
+          <Input
+            value={guest.extraNote ?? ""}
+            placeholder="Ghi chú"
+            disabled={disabled}
+            onChange={(event) =>
+              updateGuest(guest.clientId, {
+                extraNote: event.target.value || null,
+              })
+            }
+          />
+        </MobileEditorField>
+        <MobileEditorField label="Thanh toán">
+          <span className="text-xs text-[var(--color-muted-foreground)]">
+            {options.paymentLabel}
+          </span>
+        </MobileEditorField>
+        <MobileEditorField label="Tổng">
+          <Input
+            type="number"
+            disabled
+            min={0}
+            value={guest.amount ?? 0}
+            className="font-number text-right"
+          />
+        </MobileEditorField>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -358,55 +557,321 @@ export function SessionMemberSharesEditor({
             </p>
           </div>
 
-          <div className="overflow-x-auto rounded-md border">
-            <Table minWidth="48rem">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Người</TableHead>
-                  <TableHead className="text-right">Nước</TableHead>
-                  <TableHead className="text-right">Gửi xe</TableHead>
-                  <TableHead className="text-right">Khác</TableHead>
-                  <TableHead>Ghi chú thêm</TableHead>
-                  <TableHead className="text-center">TV trả hộ</TableHead>
-                  <TableHead className="text-right">Tổng</TableHead>
-                  <TableHead className="w-[4rem]" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {allocations.map((row) => {
-                  const member = members.find(
-                    (item) => item.id === row.memberId,
-                  );
-                  if (!member) return null;
+          <div className="rounded-md border">
+            <ResponsiveDataView
+              mobile={
+                <MobileDataList className="p-2">
+                  {allocations.map((row) => {
+                    const member = members.find(
+                      (item) => item.id === row.memberId,
+                    );
+                    if (!member) return null;
 
-                  const hostedGuests = guests.filter(
-                    (guest) => guest.hostedByMemberId === row.memberId,
-                  );
+                    const hostedGuests = guests.filter(
+                      (guest) => guest.hostedByMemberId === row.memberId,
+                    );
 
-                  return (
-                    <Fragment key={row.memberId}>
-                      <TableRow>
-                        <TableCell className="font-medium">
-                          <div className="space-y-1 flex flex-col">
-                            <span>{member.name}</span>
-                            <Button
-                              type="button"
-                              variant="default"
-                              size="sm"
-                              className="h-7 px-2 text-xs"
-                              onClick={() => addHostedGuest(row.memberId)}
+                    return (
+                      <Fragment key={row.memberId}>
+                        <MobileDataCard title={member.name}>
+                          {renderMemberEditorFields(
+                            row,
+                            member.name,
+                            hostedGuests,
+                          )}
+                        </MobileDataCard>
+
+                        {hostedGuests.map((guest) => (
+                          <MobileDataCard
+                            key={guest.clientId}
+                            subdued
+                            title={`Khách của ${member.name}`}
+                            actions={
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeGuest(guest.clientId)}
+                              >
+                                Xóa
+                              </Button>
+                            }
+                          >
+                            {renderGuestEditorFields(guest, {
+                              memberPaysForGuests: row.memberPaysForGuests,
+                              paymentLabel: row.memberPaysForGuests
+                                ? "TV trả"
+                                : "Trả trực tiếp",
+                            })}
+                          </MobileDataCard>
+                        ))}
+                      </Fragment>
+                    );
+                  })}
+
+                  {standaloneGuests.map((guest) => (
+                    <MobileDataCard
+                      key={guest.clientId}
+                      title="Khách không phải thành viên"
+                      actions={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeGuest(guest.clientId)}
+                        >
+                          Xóa
+                        </Button>
+                      }
+                    >
+                      {renderGuestEditorFields(guest, {
+                        paymentLabel: "Trả trực tiếp",
+                      })}
+                    </MobileDataCard>
+                  ))}
+                </MobileDataList>
+              }
+              desktop={
+                <Table minWidth="48rem">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Người</TableHead>
+                      <TableHead className="text-right">Nước</TableHead>
+                      <TableHead className="text-right">Gửi xe</TableHead>
+                      <TableHead className="text-right">Khác</TableHead>
+                      <TableHead>Ghi chú thêm</TableHead>
+                      <TableHead className="text-center">TV trả hộ</TableHead>
+                      <TableHead className="text-right">Tổng</TableHead>
+                      <TableHead className="w-[4rem]" />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {allocations.map((row) => {
+                      const member = members.find(
+                        (item) => item.id === row.memberId,
+                      );
+                      if (!member) return null;
+
+                      const hostedGuests = guests.filter(
+                        (guest) => guest.hostedByMemberId === row.memberId,
+                      );
+
+                      return (
+                        <Fragment key={row.memberId}>
+                          <TableRow>
+                            <TableCell className="font-medium">
+                              <div className="space-y-1 flex flex-col">
+                                <span>{member.name}</span>
+                                <Button
+                                  type="button"
+                                  variant="default"
+                                  size="sm"
+                                  className="h-7 px-2 text-xs"
+                                  onClick={() => addHostedGuest(row.memberId)}
+                                >
+                                  + Thêm khách đi cùng
+                                </Button>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                min={0}
+                                value={row.water}
+                                onChange={(event) =>
+                                  updateRow(row.memberId, {
+                                    water: Number(event.target.value) || 0,
+                                  })
+                                }
+                                className="font-number text-right"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                min={0}
+                                value={row.parking}
+                                onChange={(event) =>
+                                  updateRow(row.memberId, {
+                                    parking: Number(event.target.value) || 0,
+                                  })
+                                }
+                                className="font-number text-right"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                min={0}
+                                value={row.extra}
+                                onChange={(event) =>
+                                  updateRow(row.memberId, {
+                                    extra: Number(event.target.value) || 0,
+                                  })
+                                }
+                                className="font-number text-right"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                value={row.extraNote ?? ""}
+                                placeholder="VD: Option"
+                                onChange={(event) =>
+                                  updateRow(row.memberId, {
+                                    extraNote: event.target.value || null,
+                                  })
+                                }
+                              />
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {hostedGuests.length > 0 ? (
+                                <Checkbox
+                                  checked={row.memberPaysForGuests ?? false}
+                                  onCheckedChange={(checked) =>
+                                    updateRow(row.memberId, {
+                                      memberPaysForGuests: checked === true,
+                                    })
+                                  }
+                                  aria-label={`Thành viên trả hộ khách của ${member.name}`}
+                                />
+                              ) : (
+                                <span className="text-xs text-[var(--color-muted-foreground)]">
+                                  —
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                disabled
+                                min={0}
+                                value={row.amount ?? 0}
+                                className="font-number text-right"
+                              />
+                            </TableCell>
+                            <TableCell />
+                          </TableRow>
+
+                          {hostedGuests.map((guest) => (
+                            <TableRow
+                              key={guest.clientId}
+                              className="bg-[var(--color-accent)]/40"
                             >
-                              + Thêm khách đi cùng
-                            </Button>
-                          </div>
+                              <TableCell className="pl-8">
+                                <Input
+                                  value={guest.name}
+                                  placeholder="Tên khách (bạn, người nhà...)"
+                                  onChange={(event) =>
+                                    updateGuest(guest.clientId, {
+                                      name: event.target.value,
+                                    })
+                                  }
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  value={guest.water}
+                                  disabled={row.memberPaysForGuests}
+                                  onChange={(event) =>
+                                    updateGuest(guest.clientId, {
+                                      water: Number(event.target.value) || 0,
+                                    })
+                                  }
+                                  className="font-number text-right"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  value={guest.parking}
+                                  disabled={row.memberPaysForGuests}
+                                  onChange={(event) =>
+                                    updateGuest(guest.clientId, {
+                                      parking: Number(event.target.value) || 0,
+                                    })
+                                  }
+                                  className="font-number text-right"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  value={guest.extra}
+                                  disabled={row.memberPaysForGuests}
+                                  onChange={(event) =>
+                                    updateGuest(guest.clientId, {
+                                      extra: Number(event.target.value) || 0,
+                                    })
+                                  }
+                                  className="font-number text-right"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  value={guest.extraNote ?? ""}
+                                  placeholder="Ghi chú"
+                                  disabled={row.memberPaysForGuests}
+                                  onChange={(event) =>
+                                    updateGuest(guest.clientId, {
+                                      extraNote: event.target.value || null,
+                                    })
+                                  }
+                                />
+                              </TableCell>
+                              <TableCell className="text-center text-xs text-[var(--color-muted-foreground)]">
+                                {row.memberPaysForGuests
+                                  ? "TV trả"
+                                  : "Trả trực tiếp"}
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  type="number"
+                                  disabled
+                                  min={0}
+                                  value={guest.amount ?? 0}
+                                  className="font-number text-right"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeGuest(guest.clientId)}
+                                >
+                                  Xóa
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </Fragment>
+                      );
+                    })}
+
+                    {standaloneGuests.map((guest) => (
+                      <TableRow key={guest.clientId}>
+                        <TableCell>
+                          <Input
+                            value={guest.name}
+                            placeholder="Tên khách không phải thành viên"
+                            onChange={(event) =>
+                              updateGuest(guest.clientId, {
+                                name: event.target.value,
+                              })
+                            }
+                          />
                         </TableCell>
                         <TableCell>
                           <Input
                             type="number"
                             min={0}
-                            value={row.water}
+                            value={guest.water}
                             onChange={(event) =>
-                              updateRow(row.memberId, {
+                              updateGuest(guest.clientId, {
                                 water: Number(event.target.value) || 0,
                               })
                             }
@@ -417,9 +882,9 @@ export function SessionMemberSharesEditor({
                           <Input
                             type="number"
                             min={0}
-                            value={row.parking}
+                            value={guest.parking}
                             onChange={(event) =>
-                              updateRow(row.memberId, {
+                              updateGuest(guest.clientId, {
                                 parking: Number(event.target.value) || 0,
                               })
                             }
@@ -430,9 +895,9 @@ export function SessionMemberSharesEditor({
                           <Input
                             type="number"
                             min={0}
-                            value={row.extra}
+                            value={guest.extra}
                             onChange={(event) =>
-                              updateRow(row.memberId, {
+                              updateGuest(guest.clientId, {
                                 extra: Number(event.target.value) || 0,
                               })
                             }
@@ -441,233 +906,43 @@ export function SessionMemberSharesEditor({
                         </TableCell>
                         <TableCell>
                           <Input
-                            value={row.extraNote ?? ""}
-                            placeholder="VD: Option"
+                            value={guest.extraNote ?? ""}
+                            placeholder="Ghi chú"
                             onChange={(event) =>
-                              updateRow(row.memberId, {
+                              updateGuest(guest.clientId, {
                                 extraNote: event.target.value || null,
                               })
                             }
                           />
                         </TableCell>
-                        <TableCell className="text-center">
-                          {hostedGuests.length > 0 ? (
-                            <Checkbox
-                              checked={row.memberPaysForGuests ?? false}
-                              onCheckedChange={(checked) =>
-                                updateRow(row.memberId, {
-                                  memberPaysForGuests: checked === true,
-                                })
-                              }
-                              aria-label={`Thành viên trả hộ khách của ${member.name}`}
-                            />
-                          ) : (
-                            <span className="text-xs text-[var(--color-muted-foreground)]">
-                              —
-                            </span>
-                          )}
+                        <TableCell className="text-center text-xs text-[var(--color-muted-foreground)]">
+                          Trả trực tiếp
                         </TableCell>
                         <TableCell>
                           <Input
                             type="number"
                             disabled
                             min={0}
-                            value={row.amount ?? 0}
+                            value={guest.amount ?? 0}
                             className="font-number text-right"
                           />
                         </TableCell>
-                        <TableCell />
+                        <TableCell>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeGuest(guest.clientId)}
+                          >
+                            Xóa
+                          </Button>
+                        </TableCell>
                       </TableRow>
-
-                      {hostedGuests.map((guest) => (
-                        <TableRow
-                          key={guest.clientId}
-                          className="bg-[var(--color-accent)]/40"
-                        >
-                          <TableCell className="pl-8">
-                            <Input
-                              value={guest.name}
-                              placeholder="Tên khách (bạn, người nhà...)"
-                              onChange={(event) =>
-                                updateGuest(guest.clientId, {
-                                  name: event.target.value,
-                                })
-                              }
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              min={0}
-                              value={guest.water}
-                              disabled={row.memberPaysForGuests}
-                              onChange={(event) =>
-                                updateGuest(guest.clientId, {
-                                  water: Number(event.target.value) || 0,
-                                })
-                              }
-                              className="font-number text-right"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              min={0}
-                              value={guest.parking}
-                              disabled={row.memberPaysForGuests}
-                              onChange={(event) =>
-                                updateGuest(guest.clientId, {
-                                  parking: Number(event.target.value) || 0,
-                                })
-                              }
-                              className="font-number text-right"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              min={0}
-                              value={guest.extra}
-                              disabled={row.memberPaysForGuests}
-                              onChange={(event) =>
-                                updateGuest(guest.clientId, {
-                                  extra: Number(event.target.value) || 0,
-                                })
-                              }
-                              className="font-number text-right"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              value={guest.extraNote ?? ""}
-                              placeholder="Ghi chú"
-                              disabled={row.memberPaysForGuests}
-                              onChange={(event) =>
-                                updateGuest(guest.clientId, {
-                                  extraNote: event.target.value || null,
-                                })
-                              }
-                            />
-                          </TableCell>
-                          <TableCell className="text-center text-xs text-[var(--color-muted-foreground)]">
-                            {row.memberPaysForGuests
-                              ? "TV trả"
-                              : "Trả trực tiếp"}
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              disabled
-                              min={0}
-                              value={guest.amount ?? 0}
-                              className="font-number text-right"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeGuest(guest.clientId)}
-                            >
-                              Xóa
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </Fragment>
-                  );
-                })}
-
-                {standaloneGuests.map((guest) => (
-                  <TableRow key={guest.clientId}>
-                    <TableCell>
-                      <Input
-                        value={guest.name}
-                        placeholder="Tên khách không phải thành viên"
-                        onChange={(event) =>
-                          updateGuest(guest.clientId, {
-                            name: event.target.value,
-                          })
-                        }
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        min={0}
-                        value={guest.water}
-                        onChange={(event) =>
-                          updateGuest(guest.clientId, {
-                            water: Number(event.target.value) || 0,
-                          })
-                        }
-                        className="font-number text-right"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        min={0}
-                        value={guest.parking}
-                        onChange={(event) =>
-                          updateGuest(guest.clientId, {
-                            parking: Number(event.target.value) || 0,
-                          })
-                        }
-                        className="font-number text-right"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        min={0}
-                        value={guest.extra}
-                        onChange={(event) =>
-                          updateGuest(guest.clientId, {
-                            extra: Number(event.target.value) || 0,
-                          })
-                        }
-                        className="font-number text-right"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        value={guest.extraNote ?? ""}
-                        placeholder="Ghi chú"
-                        onChange={(event) =>
-                          updateGuest(guest.clientId, {
-                            extraNote: event.target.value || null,
-                          })
-                        }
-                      />
-                    </TableCell>
-                    <TableCell className="text-center text-xs text-[var(--color-muted-foreground)]">
-                      Trả trực tiếp
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        disabled
-                        min={0}
-                        value={guest.amount ?? 0}
-                        className="font-number text-right"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeGuest(guest.clientId)}
-                      >
-                        Xóa
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    ))}
+                  </TableBody>
+                </Table>
+              }
+            />
           </div>
 
           <div className="flex flex-wrap items-center gap-2">

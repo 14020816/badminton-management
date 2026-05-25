@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, type Dispatch, type SetStateAction } from "react";
+import { type Dispatch, type SetStateAction } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  MobileDataCard,
+  MobileDataEmpty,
+  MobileDataList,
+  MobileEditorField,
+  ResponsiveDataView,
+} from "@/components/ui/mobile-data-list";
 import {
   CLUB_FUND_PAYER_VALUE,
   type TournamentExpensePayload,
@@ -98,94 +105,174 @@ export function TournamentExpensesEditor({
         Chi phí do thành viên chi sẽ trừ vào tổng phải trả của họ, không tính
         vào quỹ.
       </p>
-      <div className="overflow-x-auto rounded-md border">
-        <Table minWidth="40rem">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Chi phí</TableHead>
-              <TableHead>Người chi</TableHead>
-              <TableHead className="text-right">Tiền</TableHead>
-              <TableHead />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {expenses.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={4}
-                  className="py-6 text-center text-[var(--color-muted-foreground)]"
-                >
-                  Chưa có chi phí giải
-                </TableCell>
-              </TableRow>
+      <div className="rounded-md border">
+        <ResponsiveDataView
+          mobile={
+            expenses.length === 0 ? (
+              <MobileDataEmpty>Chưa có chi phí giải</MobileDataEmpty>
             ) : (
-              expenses.map((expense) => (
-                <TableRow key={expense.clientId}>
-                  <TableCell>
-                    <Input
-                      value={expense.expenseName}
-                      placeholder="Tên chi phí"
-                      onChange={(event) =>
-                        updateExpense(expense.clientId, {
-                          expenseName: event.target.value,
-                        })
-                      }
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={expense.paidByMemberId ?? CLUB_FUND_PAYER_VALUE}
-                      onValueChange={(value) =>
-                        updateExpense(expense.clientId, {
-                          paidByMemberId:
-                            value === CLUB_FUND_PAYER_VALUE ? null : value,
-                        })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Người chi" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={CLUB_FUND_PAYER_VALUE}>
-                          Quỹ
-                        </SelectItem>
-                        {members.map((member) => (
-                          <SelectItem key={member.id} value={member.id}>
-                            {member.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={expense.amount || ""}
-                      placeholder="Số tiền"
-                      className="font-number text-right"
-                      onChange={(event) =>
-                        updateExpense(expense.clientId, {
-                          amount: Number(event.target.value) || 0,
-                        })
-                      }
-                    />
-                  </TableCell>
-                  <TableCell className="w-0 whitespace-nowrap">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeExpense(expense.clientId)}
-                    >
-                      Xóa
-                    </Button>
-                  </TableCell>
+              <MobileDataList className="p-2">
+                {expenses.map((expense) => (
+                  <MobileDataCard
+                    key={expense.clientId}
+                    actions={
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeExpense(expense.clientId)}
+                      >
+                        Xóa
+                      </Button>
+                    }
+                  >
+                    <div className="space-y-3">
+                      <MobileEditorField label="Chi phí">
+                        <Input
+                          value={expense.expenseName}
+                          placeholder="Tên chi phí"
+                          onChange={(event) =>
+                            updateExpense(expense.clientId, {
+                              expenseName: event.target.value,
+                            })
+                          }
+                        />
+                      </MobileEditorField>
+                      <MobileEditorField label="Người chi">
+                        <Select
+                          value={expense.paidByMemberId ?? CLUB_FUND_PAYER_VALUE}
+                          onValueChange={(value) =>
+                            updateExpense(expense.clientId, {
+                              paidByMemberId:
+                                value === CLUB_FUND_PAYER_VALUE ? null : value,
+                            })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Người chi" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={CLUB_FUND_PAYER_VALUE}>
+                              Quỹ
+                            </SelectItem>
+                            {members.map((member) => (
+                              <SelectItem key={member.id} value={member.id}>
+                                {member.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </MobileEditorField>
+                      <MobileEditorField label="Tiền">
+                        <Input
+                          type="number"
+                          min={0}
+                          value={expense.amount || ""}
+                          placeholder="Số tiền"
+                          className="font-number text-right"
+                          onChange={(event) =>
+                            updateExpense(expense.clientId, {
+                              amount: Number(event.target.value) || 0,
+                            })
+                          }
+                        />
+                      </MobileEditorField>
+                    </div>
+                  </MobileDataCard>
+                ))}
+              </MobileDataList>
+            )
+          }
+          desktop={
+            <Table minWidth="40rem">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Chi phí</TableHead>
+                  <TableHead>Người chi</TableHead>
+                  <TableHead className="text-right">Tiền</TableHead>
+                  <TableHead />
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              </TableHeader>
+              <TableBody>
+                {expenses.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={4}
+                      className="py-6 text-center text-[var(--color-muted-foreground)]"
+                    >
+                      Chưa có chi phí giải
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  expenses.map((expense) => (
+                    <TableRow key={expense.clientId}>
+                      <TableCell>
+                        <Input
+                          value={expense.expenseName}
+                          placeholder="Tên chi phí"
+                          onChange={(event) =>
+                            updateExpense(expense.clientId, {
+                              expenseName: event.target.value,
+                            })
+                          }
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={expense.paidByMemberId ?? CLUB_FUND_PAYER_VALUE}
+                          onValueChange={(value) =>
+                            updateExpense(expense.clientId, {
+                              paidByMemberId:
+                                value === CLUB_FUND_PAYER_VALUE ? null : value,
+                            })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Người chi" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={CLUB_FUND_PAYER_VALUE}>
+                              Quỹ
+                            </SelectItem>
+                            {members.map((member) => (
+                              <SelectItem key={member.id} value={member.id}>
+                                {member.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={expense.amount || ""}
+                          placeholder="Số tiền"
+                          className="font-number text-right"
+                          onChange={(event) =>
+                            updateExpense(expense.clientId, {
+                              amount: Number(event.target.value) || 0,
+                            })
+                          }
+                        />
+                      </TableCell>
+                      <TableCell className="w-0 whitespace-nowrap">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeExpense(expense.clientId)}
+                        >
+                          Xóa
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          }
+        />
       </div>
 
       <Button type="button" variant="outline" size="sm" onClick={addExpense}>

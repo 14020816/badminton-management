@@ -13,6 +13,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  MobileDataCard,
+  MobileDataField,
+  MobileDataFields,
+  MobileDataList,
+  ResponsiveDataView,
+} from "@/components/ui/mobile-data-list";
+import {
   createExpenseAction,
   createIncomeAction,
   deleteTransactionAction,
@@ -121,54 +128,104 @@ export function TransactionsView({
 
           <Card>
             <CardContent className="pt-6">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Ngày</TableHead>
-                    <TableHead>Loại</TableHead>
-                    <TableHead>Mô tả</TableHead>
-                    <TableHead className="text-right">Số tiền</TableHead>
-                    {isAdmin && <TableHead />}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {expenses.map((tx) => (
-                    <TableRow key={tx.id}>
-                      <TableCell>{formatDate(tx.date)}</TableCell>
-                      <TableCell>
-                        {EXPENSE_CATEGORY_LABELS[tx.category] ?? tx.category}
-                      </TableCell>
-                      <TableCell>
-                        {tx.description ?? "—"}
-                        {tx.quantity ? ` (${tx.quantity} quả)` : ""}
-                      </TableCell>
-                      <TableCell className="font-number text-trading-down text-right">
-                        {formatVND(tx.amount)}
-                      </TableCell>
-                      {isAdmin && (
-                        <TableCell>
-                          <ConfirmDeleteButton
-                            variant="destructive"
-                            size="sm"
-                            title="Xóa khoản chi?"
-                            description={
-                              <>
-                                Khoản chi {formatVND(tx.amount)}
-                                {tx.description ? ` (${tx.description})` : ""}{" "}
-                                sẽ bị xóa. Hành động này không thể hoàn tác.
-                              </>
-                            }
-                            successMessage="Đã xóa giao dịch"
-                            onConfirm={async () =>
-                              deleteTransactionAction(clubId, tx.id)
-                            }
-                          />
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <ResponsiveDataView
+                mobile={
+                  <MobileDataList>
+                    {expenses.map((tx) => (
+                      <MobileDataCard
+                        key={tx.id}
+                        title={formatDate(tx.date)}
+                        actions={
+                          isAdmin ? (
+                            <ConfirmDeleteButton
+                              variant="destructive"
+                              size="sm"
+                              title="Xóa khoản chi?"
+                              description={
+                                <>
+                                  Khoản chi {formatVND(tx.amount)}
+                                  {tx.description ? ` (${tx.description})` : ""}{" "}
+                                  sẽ bị xóa. Hành động này không thể hoàn tác.
+                                </>
+                              }
+                              successMessage="Đã xóa giao dịch"
+                              onConfirm={async () =>
+                                deleteTransactionAction(clubId, tx.id)
+                              }
+                            />
+                          ) : undefined
+                        }
+                      >
+                        <MobileDataFields>
+                          <MobileDataField label="Loại">
+                            {EXPENSE_CATEGORY_LABELS[tx.category] ?? tx.category}
+                          </MobileDataField>
+                          <MobileDataField
+                            label="Số tiền"
+                            valueClassName="font-number text-trading-down text-right"
+                          >
+                            {formatVND(tx.amount)}
+                          </MobileDataField>
+                          <MobileDataField label="Mô tả" fullWidth>
+                            {tx.description ?? "—"}
+                            {tx.quantity ? ` (${tx.quantity} quả)` : ""}
+                          </MobileDataField>
+                        </MobileDataFields>
+                      </MobileDataCard>
+                    ))}
+                  </MobileDataList>
+                }
+                desktop={
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Ngày</TableHead>
+                        <TableHead>Loại</TableHead>
+                        <TableHead>Mô tả</TableHead>
+                        <TableHead className="text-right">Số tiền</TableHead>
+                        {isAdmin && <TableHead />}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {expenses.map((tx) => (
+                        <TableRow key={tx.id}>
+                          <TableCell>{formatDate(tx.date)}</TableCell>
+                          <TableCell>
+                            {EXPENSE_CATEGORY_LABELS[tx.category] ?? tx.category}
+                          </TableCell>
+                          <TableCell>
+                            {tx.description ?? "—"}
+                            {tx.quantity ? ` (${tx.quantity} quả)` : ""}
+                          </TableCell>
+                          <TableCell className="font-number text-trading-down text-right">
+                            {formatVND(tx.amount)}
+                          </TableCell>
+                          {isAdmin && (
+                            <TableCell>
+                              <ConfirmDeleteButton
+                                variant="destructive"
+                                size="sm"
+                                title="Xóa khoản chi?"
+                                description={
+                                  <>
+                                    Khoản chi {formatVND(tx.amount)}
+                                    {tx.description ? ` (${tx.description})` : ""}{" "}
+                                    sẽ bị xóa. Hành động này không thể hoàn tác.
+                                  </>
+                                }
+                                successMessage="Đã xóa giao dịch"
+                                onConfirm={async () =>
+                                  deleteTransactionAction(clubId, tx.id)
+                                }
+                              />
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                }
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -243,54 +300,107 @@ export function TransactionsView({
 
           <Card>
             <CardContent className="pt-6">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Ngày</TableHead>
-                    <TableHead>Người đóng</TableHead>
-                    <TableHead>Loại</TableHead>
-                    <TableHead>Ghi chú</TableHead>
-                    <TableHead className="text-right">Số tiền</TableHead>
-                    {isAdmin && <TableHead />}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {incomes.map((tx) => (
-                    <TableRow key={tx.id}>
-                      <TableCell>{formatDate(tx.date)}</TableCell>
-                      <TableCell>{tx.member?.name ?? "—"}</TableCell>
-                      <TableCell>
-                        {INCOME_CATEGORY_LABELS[tx.category] ?? tx.category}
-                      </TableCell>
-                      <TableCell>{tx.note ?? "—"}</TableCell>
-                      <TableCell className="font-number text-trading-up text-right">
-                        {formatVND(tx.amount)}
-                      </TableCell>
-                      {isAdmin && (
-                        <TableCell>
-                          <ConfirmDeleteButton
-                            variant="destructive"
-                            size="sm"
-                            title="Xóa khoản thu?"
-                            description={
-                              <>
-                                Khoản thu {formatVND(tx.amount)}
-                                {tx.member?.name ? ` của ${tx.member.name}` : ""}
-                                {tx.note ? ` (${tx.note})` : ""} sẽ bị xóa.
-                                Hành động này không thể hoàn tác.
-                              </>
-                            }
-                            successMessage="Đã xóa giao dịch"
-                            onConfirm={async () =>
-                              deleteTransactionAction(clubId, tx.id)
-                            }
-                          />
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <ResponsiveDataView
+                mobile={
+                  <MobileDataList>
+                    {incomes.map((tx) => (
+                      <MobileDataCard
+                        key={tx.id}
+                        title={formatDate(tx.date)}
+                        actions={
+                          isAdmin ? (
+                            <ConfirmDeleteButton
+                              variant="destructive"
+                              size="sm"
+                              title="Xóa khoản thu?"
+                              description={
+                                <>
+                                  Khoản thu {formatVND(tx.amount)}
+                                  {tx.member?.name ? ` của ${tx.member.name}` : ""}
+                                  {tx.note ? ` (${tx.note})` : ""} sẽ bị xóa.
+                                  Hành động này không thể hoàn tác.
+                                </>
+                              }
+                              successMessage="Đã xóa giao dịch"
+                              onConfirm={async () =>
+                                deleteTransactionAction(clubId, tx.id)
+                              }
+                            />
+                          ) : undefined
+                        }
+                      >
+                        <MobileDataFields>
+                          <MobileDataField label="Người đóng">
+                            {tx.member?.name ?? "—"}
+                          </MobileDataField>
+                          <MobileDataField
+                            label="Số tiền"
+                            valueClassName="font-number text-trading-up text-right"
+                          >
+                            {formatVND(tx.amount)}
+                          </MobileDataField>
+                          <MobileDataField label="Loại">
+                            {INCOME_CATEGORY_LABELS[tx.category] ?? tx.category}
+                          </MobileDataField>
+                          <MobileDataField label="Ghi chú" fullWidth>
+                            {tx.note ?? "—"}
+                          </MobileDataField>
+                        </MobileDataFields>
+                      </MobileDataCard>
+                    ))}
+                  </MobileDataList>
+                }
+                desktop={
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Ngày</TableHead>
+                        <TableHead>Người đóng</TableHead>
+                        <TableHead>Loại</TableHead>
+                        <TableHead>Ghi chú</TableHead>
+                        <TableHead className="text-right">Số tiền</TableHead>
+                        {isAdmin && <TableHead />}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {incomes.map((tx) => (
+                        <TableRow key={tx.id}>
+                          <TableCell>{formatDate(tx.date)}</TableCell>
+                          <TableCell>{tx.member?.name ?? "—"}</TableCell>
+                          <TableCell>
+                            {INCOME_CATEGORY_LABELS[tx.category] ?? tx.category}
+                          </TableCell>
+                          <TableCell>{tx.note ?? "—"}</TableCell>
+                          <TableCell className="font-number text-trading-up text-right">
+                            {formatVND(tx.amount)}
+                          </TableCell>
+                          {isAdmin && (
+                            <TableCell>
+                              <ConfirmDeleteButton
+                                variant="destructive"
+                                size="sm"
+                                title="Xóa khoản thu?"
+                                description={
+                                  <>
+                                    Khoản thu {formatVND(tx.amount)}
+                                    {tx.member?.name ? ` của ${tx.member.name}` : ""}
+                                    {tx.note ? ` (${tx.note})` : ""} sẽ bị xóa.
+                                    Hành động này không thể hoàn tác.
+                                  </>
+                                }
+                                successMessage="Đã xóa giao dịch"
+                                onConfirm={async () =>
+                                  deleteTransactionAction(clubId, tx.id)
+                                }
+                              />
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                }
+              />
             </CardContent>
           </Card>
         </TabsContent>

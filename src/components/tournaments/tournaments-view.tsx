@@ -15,6 +15,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  MobileDataCard,
+  MobileDataEmpty,
+  MobileDataField,
+  MobileDataFields,
+  MobileDataList,
+  ResponsiveDataView,
+} from "@/components/ui/mobile-data-list";
+import {
   createTournamentAction,
   deleteTournamentAction,
   updateTournamentAction,
@@ -77,39 +85,66 @@ function TournamentExpensesTable({
   expenses: Tournament["expenses"];
 }) {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Chi phí</TableHead>
-          <TableHead>Người chi</TableHead>
-          <TableHead className="text-right">Tiền</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {expenses.length === 0 ? (
-          <TableRow>
-            <TableCell
-              colSpan={3}
-              className="py-6 text-center text-[var(--color-muted-foreground)]"
-            >
-              Chưa có chi phí giải
-            </TableCell>
-          </TableRow>
+    <ResponsiveDataView
+      mobile={
+        expenses.length === 0 ? (
+          <MobileDataEmpty>Chưa có chi phí giải</MobileDataEmpty>
         ) : (
-          expenses.map((expense) => (
-            <TableRow key={expense.id}>
-              <TableCell>{expense.expenseName}</TableCell>
-              <TableCell>
-                {expense.paidByMember?.name ?? expense.paidBy}
-              </TableCell>
-              <TableCell className="font-number text-right">
-                {formatVND(expense.amount)}
-              </TableCell>
+          <MobileDataList>
+            {expenses.map((expense) => (
+              <MobileDataCard key={expense.id} title={expense.expenseName}>
+                <MobileDataFields>
+                  <MobileDataField label="Người chi">
+                    {expense.paidByMember?.name ?? expense.paidBy}
+                  </MobileDataField>
+                  <MobileDataField
+                    label="Tiền"
+                    valueClassName="font-number text-right"
+                  >
+                    {formatVND(expense.amount)}
+                  </MobileDataField>
+                </MobileDataFields>
+              </MobileDataCard>
+            ))}
+          </MobileDataList>
+        )
+      }
+      desktop={
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Chi phí</TableHead>
+              <TableHead>Người chi</TableHead>
+              <TableHead className="text-right">Tiền</TableHead>
             </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
+          </TableHeader>
+          <TableBody>
+            {expenses.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={3}
+                  className="py-6 text-center text-[var(--color-muted-foreground)]"
+                >
+                  Chưa có chi phí giải
+                </TableCell>
+              </TableRow>
+            ) : (
+              expenses.map((expense) => (
+                <TableRow key={expense.id}>
+                  <TableCell>{expense.expenseName}</TableCell>
+                  <TableCell>
+                    {expense.paidByMember?.name ?? expense.paidBy}
+                  </TableCell>
+                  <TableCell className="font-number text-right">
+                    {formatVND(expense.amount)}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      }
+    />
   );
 }
 
@@ -119,30 +154,55 @@ function TournamentBracketsTable({
   brackets: Tournament["brackets"];
 }) {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>STT</TableHead>
-          <TableHead>Bảng A</TableHead>
-          <TableHead>Bảng B</TableHead>
-          <TableHead>Nhóm tập</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {brackets.map((row) => (
-          <TableRow key={row.order}>
-            <TableCell>{row.order}</TableCell>
-            <TableCell>{row.groupAMember?.name ?? "—"}</TableCell>
-            <TableCell>{row.groupBMember?.name ?? "—"}</TableCell>
-            <TableCell>
-              {row.practiceGroupName
-                ? `${row.practiceGroupName}: ${row.practiceGroupMembers ?? ""}`
-                : "—"}
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <ResponsiveDataView
+      mobile={
+        <MobileDataList>
+          {brackets.map((row) => (
+            <MobileDataCard key={row.order} title={`Bảng ${row.order}`}>
+              <MobileDataFields>
+                <MobileDataField label="Bảng A">
+                  {row.groupAMember?.name ?? "—"}
+                </MobileDataField>
+                <MobileDataField label="Bảng B">
+                  {row.groupBMember?.name ?? "—"}
+                </MobileDataField>
+                <MobileDataField label="Nhóm tập" fullWidth>
+                  {row.practiceGroupName
+                    ? `${row.practiceGroupName}: ${row.practiceGroupMembers ?? ""}`
+                    : "—"}
+                </MobileDataField>
+              </MobileDataFields>
+            </MobileDataCard>
+          ))}
+        </MobileDataList>
+      }
+      desktop={
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>STT</TableHead>
+              <TableHead>Bảng A</TableHead>
+              <TableHead>Bảng B</TableHead>
+              <TableHead>Nhóm tập</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {brackets.map((row) => (
+              <TableRow key={row.order}>
+                <TableCell>{row.order}</TableCell>
+                <TableCell>{row.groupAMember?.name ?? "—"}</TableCell>
+                <TableCell>{row.groupBMember?.name ?? "—"}</TableCell>
+                <TableCell>
+                  {row.practiceGroupName
+                    ? `${row.practiceGroupName}: ${row.practiceGroupMembers ?? ""}`
+                    : "—"}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      }
+    />
   );
 }
 
@@ -390,68 +450,147 @@ export function TournamentsView({
                 <>
                   <div>
                     <h3 className="mb-2 font-semibold">Chi phí thành viên</h3>
-                    <Table minWidth="36rem">
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Thành viên</TableHead>
-                          <TableHead className="text-right">Phần chia</TableHead>
-                          <TableHead className="text-right">Chi phí thêm</TableHead>
-                          <TableHead className="text-right">Đã chi</TableHead>
-                          <TableHead>Ghi chú</TableHead>
-                          <TableHead className="text-right">Tổng</TableHead>
-                          <TableHead>Quỹ</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {tournament.members.map((member) => {
-                          const memberPaidExpense = memberPaidExpenseForMember(
-                            tournament.expenses,
-                            member.member.id,
-                          );
-                          const credit = calcTournamentMemberCredit(member.amount);
-                          const hasSurplusIncome =
-                            tournament.surplusIncomeMemberIds.includes(
+                    <ResponsiveDataView
+                      mobile={
+                        <MobileDataList>
+                          {tournament.members.map((member) => {
+                            const memberPaidExpense = memberPaidExpenseForMember(
+                              tournament.expenses,
                               member.member.id,
                             );
+                            const credit = calcTournamentMemberCredit(
+                              member.amount,
+                            );
+                            const hasSurplusIncome =
+                              tournament.surplusIncomeMemberIds.includes(
+                                member.member.id,
+                              );
 
-                          return (
-                          <TableRow key={member.id}>
-                            <TableCell>{member.member.name}</TableCell>
-                            <TableCell className="font-number text-right">
-                              {formatVND(member.shareCost)}
-                            </TableCell>
-                            <TableCell className="font-number text-right">
-                              {formatVND(member.additionalCost)}
-                            </TableCell>
-                            <TableCell className="font-number text-right text-[var(--color-muted-foreground)]">
-                              {memberPaidExpense > 0
-                                ? `-${formatVND(memberPaidExpense)}`
-                                : "—"}
-                            </TableCell>
-                            <TableCell>{member.additionalNote ?? "—"}</TableCell>
-                            <TableCell
-                              className={`font-number text-right font-medium ${member.amount < 0 ? "text-[var(--color-success)]" : ""}`}
-                            >
-                              {formatVND(member.amount)}
-                            </TableCell>
-                            <TableCell>
-                              <Badge                               
-                                variant={
-                                  member.countsToBudget ? "default" : "secondary"
-                                }
+                            return (
+                              <MobileDataCard
+                                key={member.id}
+                                title={member.member.name}
                               >
-                                {member.countsToBudget
-                                  ? "Tính vào quỹ"
-                                  : credit > 0 && hasSurplusIncome
-                                    ? `Khoản thu ${formatVND(credit)}`
-                                    : "Trả trực tiếp"}
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
+                                <MobileDataFields>
+                                  <MobileDataField
+                                    label="Phần chia"
+                                    valueClassName="font-number text-right"
+                                  >
+                                    {formatVND(member.shareCost)}
+                                  </MobileDataField>
+                                  <MobileDataField
+                                    label="Chi phí thêm"
+                                    valueClassName="font-number text-right"
+                                  >
+                                    {formatVND(member.additionalCost)}
+                                  </MobileDataField>
+                                  <MobileDataField
+                                    label="Đã chi"
+                                    valueClassName="font-number text-right text-[var(--color-muted-foreground)]"
+                                  >
+                                    {memberPaidExpense > 0
+                                      ? `-${formatVND(memberPaidExpense)}`
+                                      : "—"}
+                                  </MobileDataField>
+                                  <MobileDataField
+                                    label="Tổng"
+                                    valueClassName={`font-number text-right font-medium ${member.amount < 0 ? "text-[var(--color-success)]" : ""}`}
+                                  >
+                                    {formatVND(member.amount)}
+                                  </MobileDataField>
+                                  <MobileDataField label="Ghi chú" fullWidth>
+                                    {member.additionalNote ?? "—"}
+                                  </MobileDataField>
+                                  <MobileDataField label="Quỹ" fullWidth>
+                                    <Badge
+                                      variant={
+                                        member.countsToBudget
+                                          ? "default"
+                                          : "secondary"
+                                      }
+                                    >
+                                      {member.countsToBudget
+                                        ? "Tính vào quỹ"
+                                        : credit > 0 && hasSurplusIncome
+                                          ? `Khoản thu ${formatVND(credit)}`
+                                          : "Trả trực tiếp"}
+                                    </Badge>
+                                  </MobileDataField>
+                                </MobileDataFields>
+                              </MobileDataCard>
+                            );
+                          })}
+                        </MobileDataList>
+                      }
+                      desktop={
+                        <Table minWidth="36rem">
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Thành viên</TableHead>
+                              <TableHead className="text-right">Phần chia</TableHead>
+                              <TableHead className="text-right">Chi phí thêm</TableHead>
+                              <TableHead className="text-right">Đã chi</TableHead>
+                              <TableHead>Ghi chú</TableHead>
+                              <TableHead className="text-right">Tổng</TableHead>
+                              <TableHead>Quỹ</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {tournament.members.map((member) => {
+                              const memberPaidExpense = memberPaidExpenseForMember(
+                                tournament.expenses,
+                                member.member.id,
+                              );
+                              const credit = calcTournamentMemberCredit(
+                                member.amount,
+                              );
+                              const hasSurplusIncome =
+                                tournament.surplusIncomeMemberIds.includes(
+                                  member.member.id,
+                                );
+
+                              return (
+                                <TableRow key={member.id}>
+                                  <TableCell>{member.member.name}</TableCell>
+                                  <TableCell className="font-number text-right">
+                                    {formatVND(member.shareCost)}
+                                  </TableCell>
+                                  <TableCell className="font-number text-right">
+                                    {formatVND(member.additionalCost)}
+                                  </TableCell>
+                                  <TableCell className="font-number text-right text-[var(--color-muted-foreground)]">
+                                    {memberPaidExpense > 0
+                                      ? `-${formatVND(memberPaidExpense)}`
+                                      : "—"}
+                                  </TableCell>
+                                  <TableCell>{member.additionalNote ?? "—"}</TableCell>
+                                  <TableCell
+                                    className={`font-number text-right font-medium ${member.amount < 0 ? "text-[var(--color-success)]" : ""}`}
+                                  >
+                                    {formatVND(member.amount)}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge
+                                      variant={
+                                        member.countsToBudget
+                                          ? "default"
+                                          : "secondary"
+                                      }
+                                    >
+                                      {member.countsToBudget
+                                        ? "Tính vào quỹ"
+                                        : credit > 0 && hasSurplusIncome
+                                          ? `Khoản thu ${formatVND(credit)}`
+                                          : "Trả trực tiếp"}
+                                    </Badge>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      }
+                    />
                   </div>
 
                   <div>

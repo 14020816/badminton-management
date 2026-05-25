@@ -14,6 +14,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  MobileDataCard,
+  MobileDataField,
+  MobileDataFields,
+  MobileDataList,
+  ResponsiveDataView,
+} from "@/components/ui/mobile-data-list";
 import { PageHeader } from "@/components/layout/page-header";
 import { MemberLeaderboard } from "@/components/dashboard/member-leaderboard";
 import { useDashboardMotion } from "@/components/dashboard/dashboard-motion";
@@ -197,27 +204,47 @@ export function DashboardView({
                   </PieChart>
                 </ResponsiveContainer>
               </motion.div>
-              <Table minWidth="100%">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Loại</TableHead>
-                    <TableHead className="text-right">Tổng</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {expenseBreakdown.map((item, index) => (
-                    <MotionTableRow
-                      key={item.category}
-                      {...motionConfig.listItem(index)}
-                    >
-                      <TableCell>{item.label}</TableCell>
-                      <TableCell className="font-number text-right">
-                        {formatVND(item.total)}
-                      </TableCell>
-                    </MotionTableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <ResponsiveDataView
+                mobile={
+                  <MobileDataList>
+                    {expenseBreakdown.map((item) => (
+                      <MobileDataCard key={item.category} title={item.label}>
+                        <MobileDataFields columns={1}>
+                          <MobileDataField
+                            label="Tổng"
+                            valueClassName="font-number font-medium"
+                          >
+                            {formatVND(item.total)}
+                          </MobileDataField>
+                        </MobileDataFields>
+                      </MobileDataCard>
+                    ))}
+                  </MobileDataList>
+                }
+                desktop={
+                  <Table minWidth="100%">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Loại</TableHead>
+                        <TableHead className="text-right">Tổng</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {expenseBreakdown.map((item, index) => (
+                        <MotionTableRow
+                          key={item.category}
+                          {...motionConfig.listItem(index)}
+                        >
+                          <TableCell>{item.label}</TableCell>
+                          <TableCell className="font-number text-right">
+                            {formatVND(item.total)}
+                          </TableCell>
+                        </MotionTableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                }
+              />
             </CardContent>
           </Card>
         </motion.div>

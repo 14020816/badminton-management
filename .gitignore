@@ -58,3 +58,4 @@ Desktop.ini
 
 # Optional: local Excel imports (keep seed JSON in data/ tracked)
 /*.xlsx
+data

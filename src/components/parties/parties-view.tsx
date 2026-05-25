@@ -15,6 +15,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  MobileDataCard,
+  MobileDataField,
+  MobileDataFields,
+  MobileDataList,
+  ResponsiveDataView,
+} from "@/components/ui/mobile-data-list";
+import {
   createPartyAction,
   deletePartyAction,
   updatePartyAction,
@@ -277,36 +284,74 @@ export function PartiesView({
                     </p>
                   )}
 
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Thành viên</TableHead>
-                        <TableHead className="text-right">Số tiền</TableHead>
-                        <TableHead>Quỹ</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {party.members.map((member) => (
-                        <TableRow key={member.id}>
-                          <TableCell>{member.member.name}</TableCell>
-                          <TableCell className="font-number text-right font-medium">
-                            {formatVND(member.amount)}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                member.countsToBudget ? "default" : "secondary"
-                              }
-                            >
-                              {member.countsToBudget
-                                ? "Tính vào quỹ"
-                                : "Trả trực tiếp"}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                  <ResponsiveDataView
+                    mobile={
+                      <MobileDataList>
+                        {party.members.map((member) => (
+                          <MobileDataCard
+                            key={member.id}
+                            title={member.member.name}
+                          >
+                            <MobileDataFields>
+                              <MobileDataField
+                                label="Số tiền"
+                                valueClassName="font-number text-right font-medium"
+                              >
+                                {formatVND(member.amount)}
+                              </MobileDataField>
+                              <MobileDataField label="Quỹ">
+                                <Badge
+                                  variant={
+                                    member.countsToBudget
+                                      ? "default"
+                                      : "secondary"
+                                  }
+                                >
+                                  {member.countsToBudget
+                                    ? "Tính vào quỹ"
+                                    : "Trả trực tiếp"}
+                                </Badge>
+                              </MobileDataField>
+                            </MobileDataFields>
+                          </MobileDataCard>
+                        ))}
+                      </MobileDataList>
+                    }
+                    desktop={
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Thành viên</TableHead>
+                            <TableHead className="text-right">Số tiền</TableHead>
+                            <TableHead>Quỹ</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {party.members.map((member) => (
+                            <TableRow key={member.id}>
+                              <TableCell>{member.member.name}</TableCell>
+                              <TableCell className="font-number text-right font-medium">
+                                {formatVND(member.amount)}
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant={
+                                    member.countsToBudget
+                                      ? "default"
+                                      : "secondary"
+                                  }
+                                >
+                                  {member.countsToBudget
+                                    ? "Tính vào quỹ"
+                                    : "Trả trực tiếp"}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    }
+                  />
                 </>
               )}
             </CardContent>

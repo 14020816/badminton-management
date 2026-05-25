@@ -13,6 +13,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  MobileDataCard,
+  MobileDataEmpty,
+  MobileDataField,
+  MobileDataFields,
+  MobileDataList,
+  ResponsiveDataView,
+} from "@/components/ui/mobile-data-list";
 import { PageHeader } from "@/components/layout/page-header";
 import { MemberAddDialog } from "@/components/clubs/member-add-dialog";
 import {
@@ -56,78 +64,140 @@ export function ClubMembersSettings({
           </Button>
         </CardHeader>
         <CardContent>
-          <Table minWidth="36rem">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-16">Hạng</TableHead>
-                <TableHead>Tên</TableHead>
-                <TableHead>Tài khoản</TableHead>
-                <TableHead>Vai trò</TableHead>
-                <TableHead className="w-24">Thao tác</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {members.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="py-8 text-center text-[var(--color-muted-foreground)]"
-                  >
-                    Chưa có thành viên
-                  </TableCell>
-                </TableRow>
+          <ResponsiveDataView
+            mobile={
+              members.length === 0 ? (
+                <MobileDataEmpty>Chưa có thành viên</MobileDataEmpty>
               ) : (
-                members.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell>
-                      {member.rank ? (
-                        <Badge variant="secondary">{member.rank}</Badge>
-                      ) : (
-                        <span className="text-[var(--color-muted-foreground)]">
-                          {formatMemberRank(member.rank)}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>{member.name}</TableCell>
-                    <TableCell>
-                      {member.membership ? (
-                        <span>
-                          {member.membership.user.name ?? member.membership.user.email}
-                        </span>
-                      ) : (
-                        <span className="text-[var(--color-muted-foreground)]">
-                          Chưa liên kết
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {member.membership?.role === ClubRole.ADMIN
-                        ? "Thủ quỹ"
-                        : member.membership
-                          ? "Lông thủ"
-                          : "—"}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          setEditingMember({
-                            id: member.id,
-                            name: member.name,
-                            rank: member.rank,
-                          })
-                        }
-                      >
-                        Sửa
-                      </Button>
-                    </TableCell>
+                <MobileDataList>
+                  {members.map((member) => (
+                    <MobileDataCard
+                      key={member.id}
+                      title={member.name}
+                      actions={
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setEditingMember({
+                              id: member.id,
+                              name: member.name,
+                              rank: member.rank,
+                            })
+                          }
+                        >
+                          Sửa
+                        </Button>
+                      }
+                    >
+                      <MobileDataFields>
+                        <MobileDataField label="Hạng">
+                          {member.rank ? (
+                            <Badge variant="secondary">{member.rank}</Badge>
+                          ) : (
+                            formatMemberRank(member.rank)
+                          )}
+                        </MobileDataField>
+                        <MobileDataField label="Vai trò">
+                          {member.membership?.role === ClubRole.ADMIN
+                            ? "Thủ quỹ"
+                            : member.membership
+                              ? "Lông thủ"
+                              : "—"}
+                        </MobileDataField>
+                        <MobileDataField label="Tài khoản" fullWidth>
+                          {member.membership ? (
+                            member.membership.user.name ??
+                            member.membership.user.email
+                          ) : (
+                            <span className="text-[var(--color-muted-foreground)]">
+                              Chưa liên kết
+                            </span>
+                          )}
+                        </MobileDataField>
+                      </MobileDataFields>
+                    </MobileDataCard>
+                  ))}
+                </MobileDataList>
+              )
+            }
+            desktop={
+              <Table minWidth="36rem">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-16">Hạng</TableHead>
+                    <TableHead>Tên</TableHead>
+                    <TableHead>Tài khoản</TableHead>
+                    <TableHead>Vai trò</TableHead>
+                    <TableHead className="w-24">Thao tác</TableHead>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                </TableHeader>
+                <TableBody>
+                  {members.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={5}
+                        className="py-8 text-center text-[var(--color-muted-foreground)]"
+                      >
+                        Chưa có thành viên
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    members.map((member) => (
+                      <TableRow key={member.id}>
+                        <TableCell>
+                          {member.rank ? (
+                            <Badge variant="secondary">{member.rank}</Badge>
+                          ) : (
+                            <span className="text-[var(--color-muted-foreground)]">
+                              {formatMemberRank(member.rank)}
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>{member.name}</TableCell>
+                        <TableCell>
+                          {member.membership ? (
+                            <span>
+                              {member.membership.user.name ??
+                                member.membership.user.email}
+                            </span>
+                          ) : (
+                            <span className="text-[var(--color-muted-foreground)]">
+                              Chưa liên kết
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {member.membership?.role === ClubRole.ADMIN
+                            ? "Thủ quỹ"
+                            : member.membership
+                              ? "Lông thủ"
+                              : "—"}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              setEditingMember({
+                                id: member.id,
+                                name: member.name,
+                                rank: member.rank,
+                              })
+                            }
+                          >
+                            Sửa
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            }
+          />
         </CardContent>
       </Card>
 

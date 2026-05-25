@@ -12,6 +12,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  MobileDataCard,
+  MobileDataList,
+  MobileEditorField,
+  ResponsiveDataView,
+} from "@/components/ui/mobile-data-list";
 import type { PartyMemberAllocationPayload } from "@/lib/domain/parties";
 import { formatVND } from "@/lib/format";
 
@@ -93,56 +99,104 @@ export function PartyMemberCostsEditor({
       {allocations.length > 0 && (
         <div className="space-y-3">
           <Label>Chi phí từng người</Label>
-          <div className="overflow-x-auto rounded-md border">
-            <Table minWidth="28rem">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Thành viên</TableHead>
-                  <TableHead className="text-right">Số tiền</TableHead>
-                  <TableHead className="text-center">Tính vào quỹ</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {allocations.map((row) => {
-                  const member = members.find(
-                    (item) => item.id === row.memberId,
-                  );
-                  if (!member) return null;
+          <div className="rounded-md border">
+            <ResponsiveDataView
+              mobile={
+                <MobileDataList className="p-2">
+                  {allocations.map((row) => {
+                    const member = members.find(
+                      (item) => item.id === row.memberId,
+                    );
+                    if (!member) return null;
 
-                  return (
-                    <TableRow key={row.memberId}>
-                      <TableCell className="font-medium">
-                        {member.name}
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          min={0}
-                          value={row.amount}
-                          onChange={(event) =>
-                            updateRow(row.memberId, {
-                              amount: Number(event.target.value) || 0,
-                            })
-                          }
-                          className="font-number text-right"
-                        />
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Checkbox
-                          checked={row.countsToBudget}
-                          onCheckedChange={(checked) =>
-                            updateRow(row.memberId, {
-                              countsToBudget: checked === true,
-                            })
-                          }
-                          aria-label={`Tính vào quỹ cho ${member.name}`}
-                        />
-                      </TableCell>
+                    return (
+                      <MobileDataCard key={row.memberId} title={member.name}>
+                        <div className="space-y-3">
+                          <MobileEditorField label="Số tiền">
+                            <Input
+                              type="number"
+                              min={0}
+                              value={row.amount}
+                              onChange={(event) =>
+                                updateRow(row.memberId, {
+                                  amount: Number(event.target.value) || 0,
+                                })
+                              }
+                              className="font-number text-right"
+                            />
+                          </MobileEditorField>
+                          <MobileEditorField label="Tính vào quỹ">
+                            <label className="flex items-center gap-2">
+                              <Checkbox
+                                checked={row.countsToBudget}
+                                onCheckedChange={(checked) =>
+                                  updateRow(row.memberId, {
+                                    countsToBudget: checked === true,
+                                  })
+                                }
+                                aria-label={`Tính vào quỹ cho ${member.name}`}
+                              />
+                              <span className="text-sm">Tính vào quỹ</span>
+                            </label>
+                          </MobileEditorField>
+                        </div>
+                      </MobileDataCard>
+                    );
+                  })}
+                </MobileDataList>
+              }
+              desktop={
+                <Table minWidth="28rem">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Thành viên</TableHead>
+                      <TableHead className="text-right">Số tiền</TableHead>
+                      <TableHead className="text-center">Tính vào quỹ</TableHead>
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {allocations.map((row) => {
+                      const member = members.find(
+                        (item) => item.id === row.memberId,
+                      );
+                      if (!member) return null;
+
+                      return (
+                        <TableRow key={row.memberId}>
+                          <TableCell className="font-medium">
+                            {member.name}
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              min={0}
+                              value={row.amount}
+                              onChange={(event) =>
+                                updateRow(row.memberId, {
+                                  amount: Number(event.target.value) || 0,
+                                })
+                              }
+                              className="font-number text-right"
+                            />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Checkbox
+                              checked={row.countsToBudget}
+                              onCheckedChange={(checked) =>
+                                updateRow(row.memberId, {
+                                  countsToBudget: checked === true,
+                                })
+                              }
+                              aria-label={`Tính vào quỹ cho ${member.name}`}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              }
+            />
           </div>
 
           <p className="text-sm text-[var(--color-muted-foreground)]">

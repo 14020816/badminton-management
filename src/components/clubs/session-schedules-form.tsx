@@ -15,6 +15,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  MobileDataCard,
+  MobileDataField,
+  MobileDataFields,
+  MobileDataList,
+  ResponsiveDataView,
+} from "@/components/ui/mobile-data-list";
 import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
 import { AddressFields } from "@/components/form/address-fields";
 import {
@@ -151,91 +158,182 @@ export function SessionSchedulesForm({
             <CardTitle>Lịch đánh hàng tuần</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table minWidth="32rem">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Giờ</TableHead>
-                  <TableHead>Ngày</TableHead>
-                  <TableHead>Loại sân</TableHead>
-                  <TableHead>Địa chỉ</TableHead>
-                  <TableHead className="text-right">Thuê sân</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead className="w-[10rem]">Thao tác</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {schedules.map((schedule) => (
-                  <TableRow
-                    key={schedule.id}
-                    className={cn(!schedule.enabled && "opacity-60")}
-                  >
-                    <TableCell>
-                      {formatScheduleTimeRange(schedule.startTime, schedule.endTime)}
-                    </TableCell>
-                    <TableCell>{formatWeekdays(schedule.weekdays)}</TableCell>
-                    <TableCell>{formatCourtType(schedule.courtType)}</TableCell>
-                    <TableCell className="max-w-[12rem] truncate">
-                      {schedule.address ?? "—"}
-                    </TableCell>
-                    <TableCell className="font-number text-right">
-                      {formatVND(schedule.courtRental)}
-                    </TableCell>
-                    <TableCell>
-                      {schedule.enabled ? (
-                        <Badge variant="secondary">Đang dùng</Badge>
-                      ) : (
-                        <Badge variant="outline">Đã tắt</Badge>
+            <ResponsiveDataView
+              mobile={
+                <MobileDataList>
+                  {schedules.map((schedule) => (
+                    <MobileDataCard
+                      key={schedule.id}
+                      className={cn(!schedule.enabled && "opacity-60")}
+                      title={formatScheduleTimeRange(
+                        schedule.startTime,
+                        schedule.endTime,
                       )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            setEditingSchedule({
-                              id: schedule.id,
-                              startTime: schedule.startTime,
-                              endTime: schedule.endTime,
-                              weekdays: schedule.weekdays,
-                              courtType: schedule.courtType,
-                              courtRental: schedule.courtRental,
-                              address: schedule.address,
-                              googleAddressUrl: schedule.googleAddressUrl,
-                            })
-                          }
-                        >
-                          Sửa
-                        </Button>
-                        <MutationForm
-                          action={async () =>
-                            setSessionScheduleEnabledAction(
-                              clubId,
-                              schedule.id,
-                              !schedule.enabled,
-                            )
-                          }
-                          successMessage={
-                            schedule.enabled
-                              ? "Đã tắt lịch đánh"
-                              : "Đã bật lịch đánh"
-                          }
-                        >
-                          <SubmitButton
-                            variant={schedule.enabled ? "outline" : "default"}
+                      actions={
+                        <div className="flex flex-wrap gap-1">
+                          <Button
+                            type="button"
+                            variant="outline"
                             size="sm"
-                            pendingText="Đang cập nhật..."
+                            onClick={() =>
+                              setEditingSchedule({
+                                id: schedule.id,
+                                startTime: schedule.startTime,
+                                endTime: schedule.endTime,
+                                weekdays: schedule.weekdays,
+                                courtType: schedule.courtType,
+                                courtRental: schedule.courtRental,
+                                address: schedule.address,
+                                googleAddressUrl: schedule.googleAddressUrl,
+                              })
+                            }
                           >
-                            {schedule.enabled ? "Tắt" : "Bật lại"}
-                          </SubmitButton>
-                        </MutationForm>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                            Sửa
+                          </Button>
+                          <MutationForm
+                            action={async () =>
+                              setSessionScheduleEnabledAction(
+                                clubId,
+                                schedule.id,
+                                !schedule.enabled,
+                              )
+                            }
+                            successMessage={
+                              schedule.enabled
+                                ? "Đã tắt lịch đánh"
+                                : "Đã bật lịch đánh"
+                            }
+                          >
+                            <SubmitButton
+                              variant={schedule.enabled ? "outline" : "default"}
+                              size="sm"
+                              pendingText="Đang cập nhật..."
+                            >
+                              {schedule.enabled ? "Tắt" : "Bật lại"}
+                            </SubmitButton>
+                          </MutationForm>
+                        </div>
+                      }
+                    >
+                      <MobileDataFields>
+                        <MobileDataField label="Ngày">
+                          {formatWeekdays(schedule.weekdays)}
+                        </MobileDataField>
+                        <MobileDataField label="Loại sân">
+                          {formatCourtType(schedule.courtType)}
+                        </MobileDataField>
+                        <MobileDataField
+                          label="Thuê sân"
+                          valueClassName="font-number text-right"
+                        >
+                          {formatVND(schedule.courtRental)}
+                        </MobileDataField>
+                        <MobileDataField label="Trạng thái">
+                          {schedule.enabled ? (
+                            <Badge variant="secondary">Đang dùng</Badge>
+                          ) : (
+                            <Badge variant="outline">Đã tắt</Badge>
+                          )}
+                        </MobileDataField>
+                        <MobileDataField label="Địa chỉ" fullWidth>
+                          {schedule.address ?? "—"}
+                        </MobileDataField>
+                      </MobileDataFields>
+                    </MobileDataCard>
+                  ))}
+                </MobileDataList>
+              }
+              desktop={
+                <Table minWidth="32rem">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Giờ</TableHead>
+                      <TableHead>Ngày</TableHead>
+                      <TableHead>Loại sân</TableHead>
+                      <TableHead>Địa chỉ</TableHead>
+                      <TableHead className="text-right">Thuê sân</TableHead>
+                      <TableHead>Trạng thái</TableHead>
+                      <TableHead className="w-[10rem]">Thao tác</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {schedules.map((schedule) => (
+                      <TableRow
+                        key={schedule.id}
+                        className={cn(!schedule.enabled && "opacity-60")}
+                      >
+                        <TableCell>
+                          {formatScheduleTimeRange(
+                            schedule.startTime,
+                            schedule.endTime,
+                          )}
+                        </TableCell>
+                        <TableCell>{formatWeekdays(schedule.weekdays)}</TableCell>
+                        <TableCell>{formatCourtType(schedule.courtType)}</TableCell>
+                        <TableCell className="max-w-[12rem] truncate">
+                          {schedule.address ?? "—"}
+                        </TableCell>
+                        <TableCell className="font-number text-right">
+                          {formatVND(schedule.courtRental)}
+                        </TableCell>
+                        <TableCell>
+                          {schedule.enabled ? (
+                            <Badge variant="secondary">Đang dùng</Badge>
+                          ) : (
+                            <Badge variant="outline">Đã tắt</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                setEditingSchedule({
+                                  id: schedule.id,
+                                  startTime: schedule.startTime,
+                                  endTime: schedule.endTime,
+                                  weekdays: schedule.weekdays,
+                                  courtType: schedule.courtType,
+                                  courtRental: schedule.courtRental,
+                                  address: schedule.address,
+                                  googleAddressUrl: schedule.googleAddressUrl,
+                                })
+                              }
+                            >
+                              Sửa
+                            </Button>
+                            <MutationForm
+                              action={async () =>
+                                setSessionScheduleEnabledAction(
+                                  clubId,
+                                  schedule.id,
+                                  !schedule.enabled,
+                                )
+                              }
+                              successMessage={
+                                schedule.enabled
+                                  ? "Đã tắt lịch đánh"
+                                  : "Đã bật lịch đánh"
+                              }
+                            >
+                              <SubmitButton
+                                variant={schedule.enabled ? "outline" : "default"}
+                                size="sm"
+                                pendingText="Đang cập nhật..."
+                              >
+                                {schedule.enabled ? "Tắt" : "Bật lại"}
+                              </SubmitButton>
+                            </MutationForm>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              }
+            />
           </CardContent>
         </Card>
       )}
