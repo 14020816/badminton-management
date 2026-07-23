@@ -133,6 +133,7 @@ export async function getUnlinkedMembers(clubId: string) {
   return db.member.findMany({
     where: {
       clubId,
+      deactivatedAt: null,
       id: { notIn: linkedIds },
     },
     orderBy: { name: "asc" },

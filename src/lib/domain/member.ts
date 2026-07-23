@@ -23,3 +23,11 @@ export function parseMemberGender(value: string | null | undefined): MemberGende
     ? (value as MemberGender)
     : null;
 }
+
+export function activeMemberWhere(clubId: string) {
+  return { clubId, deactivatedAt: null } as const;
+}
+
+export function isMemberActive(member: { deactivatedAt: Date | string | null }) {
+  return member.deactivatedAt == null;
+}

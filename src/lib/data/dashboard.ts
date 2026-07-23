@@ -4,6 +4,7 @@ import {
   calcFundSummary,
 } from "@/lib/domain/ledger";
 import { loadClubMemberLedger } from "@/lib/data/member-ledger";
+import { activeMemberWhere } from "@/lib/domain/member";
 import { getUpcomingOccurrences } from "@/lib/domain/schedule";
 import type { CourtType } from "@prisma/client";
 
@@ -145,6 +146,7 @@ export async function getDashboardData(clubId: string) {
     sessionCount,
     upcomingItem,
     memberLedger,
+    activeMembers,
   ] = await Promise.all([
     db.transaction.findMany({
       where: { clubId, deletedAt: null },
@@ -154,7 +156,16 @@ export async function getDashboardData(clubId: string) {
     db.playSession.count({ where: { clubId, deletedAt: null } }),
     getUpcomingDashboardItem(clubId),
     loadClubMemberLedger(clubId),
+    db.member.findMany({
+      where: activeMemberWhere(clubId),
+      select: { id: true },
+    }),
   ]);
+
+  const activeMemberIds = new Set(activeMembers.map((member) => member.id));
+  const activeMemberLedger = memberLedger.filter((row) =>
+    activeMemberIds.has(row.memberId),
+  );
 
   const fundSummary = calcFundSummary(transactions);
   const expenseBreakdown = calcExpenseBreakdown(transactions);
@@ -162,7 +173,7 @@ export async function getDashboardData(clubId: string) {
   return {
     fundSummary,
     expenseBreakdown,
-    memberLedger,
+    memberLedger: activeMemberLedger,
     sessionCount,
     settings,
     upcomingItem,
@@ -170,7 +181,10 @@ export async function getDashboardData(clubId: string) {
 }
 
 export async function getMembers(clubId: string) {
-  return db.member.findMany({ where: { clubId }, orderBy: { name: "asc" } });
+  return db.member.findMany({
+    where: { clubId, deactivatedAt: null },
+    orderBy: { name: "asc" },
+  });
 }
 
 export async function getShuttleTypes(clubId: string) {

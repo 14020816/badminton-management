@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { MemberGender, MemberRank } from "@prisma/client";
 import {
   Dialog,
@@ -15,12 +16,15 @@ import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
 import { FormSelect } from "@/components/form/form-select";
 import { updateMemberAction } from "@/actions/members";
 import { MEMBER_GENDERS, MEMBER_RANKS } from "@/lib/domain/member";
+import { cn } from "@/lib/utils";
 
 export type EditableMember = {
   id: string;
   name: string;
   rank: MemberRank | null;
   gender: MemberGender | null;
+  deactivatedAt: Date | string | null;
+  deactivationReason: string | null;
 };
 
 export function MemberEditDialog({
@@ -34,16 +38,36 @@ export function MemberEditDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const [deactivated, setDeactivated] = useState(
+    () => member?.deactivatedAt != null,
+  );
+
+  useEffect(() => {
+    if (open && member) {
+      setDeactivated(member.deactivatedAt != null);
+    }
+  }, [open, member?.id, member?.deactivatedAt]);
+
   if (!member) return null;
 
+  const formKey = `${member.id}-${member.deactivatedAt ?? "active"}`;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          setDeactivated(member.deactivatedAt != null);
+        }
+        onOpenChange(nextOpen);
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Sửa lông thủ</DialogTitle>
         </DialogHeader>
         <MutationForm
-          key={member.id}
+          key={formKey}
           action={updateMemberAction.bind(null, clubId, member.id)}
           successMessage="Đã cập nhật thành viên"
           onSuccess={() => onOpenChange(false)}
@@ -88,6 +112,35 @@ export function MemberEditDialog({
                 })),
               ]}
             />
+          </div>
+          <div className="space-y-3 border-t border-[var(--color-border)] pt-4">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                name="deactivated"
+                checked={deactivated}
+                onChange={(event) => setDeactivated(event.target.checked)}
+                className="h-4 w-4 rounded border-[var(--color-input)]"
+              />
+              Ngưng hoạt động
+            </label>
+            {deactivated && (
+              <div className="space-y-2">
+                <Label htmlFor={`edit-member-reason-${member.id}`}>
+                  Lý do
+                </Label>
+                <textarea
+                  id={`edit-member-reason-${member.id}`}
+                  name="deactivationReason"
+                  rows={3}
+                  defaultValue={member.deactivationReason ?? ""}
+                  placeholder="Lý do (tuỳ chọn)"
+                  className={cn(
+                    "flex min-h-[5rem] w-full rounded-md border border-[var(--color-input)] bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-[var(--color-muted-foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] disabled:cursor-not-allowed disabled:opacity-50",
+                  )}
+                />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireClubAdmin, requireClubViewAccess } from "@/lib/club-context";
-import { parseMemberGender, parseMemberRank } from "@/lib/domain/member";
+import { parseMemberGender, parseMemberRank, isMemberActive } from "@/lib/domain/member";
 import { loadMembersSettingsData } from "@/lib/data/members-settings";
 
 function settingsPaths(clubId: string) {
@@ -57,9 +57,26 @@ export async function updateMemberAction(
   });
   if (duplicate) throw new Error("Thành viên này đã tồn tại");
 
+  const deactivated = formData.has("deactivated");
+  const deactivationReason = String(formData.get("deactivationReason") ?? "").trim() || null;
+  const wasActive = isMemberActive(member);
+
+  let deactivatedAt = member.deactivatedAt;
+  let reason = member.deactivationReason;
+
+  if (deactivated && wasActive) {
+    deactivatedAt = new Date();
+    reason = deactivationReason;
+  } else if (!deactivated && !wasActive) {
+    deactivatedAt = null;
+    reason = null;
+  } else if (deactivated && !wasActive) {
+    reason = deactivationReason;
+  }
+
   await db.member.update({
     where: { id: memberId },
-    data: { name, rank, gender },
+    data: { name, rank, gender, deactivatedAt, deactivationReason: reason },
   });
 
   settingsPaths(clubId).forEach((path) => revalidatePath(path));

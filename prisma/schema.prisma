@@ -211,6 +211,8 @@ model Member {
   tournamentMatchHome2 TournamentMatch[] @relation("MatchHome2")
   tournamentMatchAway2 TournamentMatch[] @relation("MatchAway2")
   partyMembers      PartyMember[]
+  deactivatedAt     DateTime?
+  deactivationReason String?
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
 

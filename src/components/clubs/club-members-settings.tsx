@@ -39,9 +39,10 @@ import {
 import {
   formatMemberGender,
   formatMemberRank,
+  isMemberActive,
   MEMBER_RANKS,
 } from "@/lib/domain/member";
-import { formatVND } from "@/lib/format";
+import { formatDate, formatVND } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type SortKey =
@@ -89,6 +90,8 @@ type MemberRow = {
   name: string;
   rank: MemberRank | null;
   gender: MemberGender | null;
+  deactivatedAt: Date | string | null;
+  deactivationReason: string | null;
   totalPaid: number;
   totalPlayCost: number;
   remainingBalance: number;
@@ -148,7 +151,10 @@ function sortMembers(
   dir: SortDir,
 ) {
   const sorted = [...members].sort((a, b) => compareMembers(a, b, key));
-  return dir === "desc" ? sorted.reverse() : sorted;
+  const directed = dir === "desc" ? sorted.reverse() : sorted;
+  const active = directed.filter((member) => isMemberActive(member));
+  const inactive = directed.filter((member) => !isMemberActive(member));
+  return [...active, ...inactive];
 }
 
 function SortableTableHead({
@@ -240,6 +246,53 @@ function MemberNameLink({
   );
 }
 
+function MemberNameCell({
+  clubId,
+  member,
+}: {
+  clubId: string;
+  member: MemberRow;
+}) {
+  const inactive = !isMemberActive(member);
+
+  return (
+    <div className={cn("space-y-1", inactive && "opacity-60")}>
+      <div className="flex flex-wrap items-center gap-2">
+        <MemberNameLink clubId={clubId} memberId={member.id} name={member.name} />
+        {inactive && (
+          <Badge variant="outline" className="shrink-0">
+            Ngưng hoạt động
+          </Badge>
+        )}
+      </div>
+      {inactive && (
+        <p className="text-xs text-[var(--color-muted-foreground)]">
+          {member.deactivatedAt && (
+            <span>Từ {formatDate(member.deactivatedAt)}</span>
+          )}
+          {member.deactivationReason && (
+            <span>
+              {member.deactivatedAt ? " · " : ""}
+              {member.deactivationReason}
+            </span>
+          )}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function toEditableMember(member: MemberRow): EditableMember {
+  return {
+    id: member.id,
+    name: member.name,
+    rank: member.rank,
+    gender: member.gender,
+    deactivatedAt: member.deactivatedAt,
+    deactivationReason: member.deactivationReason,
+  };
+}
+
 function SessionCount({
   count,
   total,
@@ -267,6 +320,7 @@ export function ClubMembersSettings({
   const [addOpen, setAddOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<EditableMember | null>(null);
   const [needsTopupOnly, setNeedsTopupOnly] = useState(false);
+  const [hideInactive, setHideInactive] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT.key);
   const [sortDir, setSortDir] = useState<SortDir>(DEFAULT_SORT.dir);
 
@@ -275,13 +329,21 @@ export function ClubMembersSettings({
     [members],
   );
 
-  const filteredMembers = useMemo(
-    () =>
-      needsTopupOnly
-        ? members.filter((member) => member.remainingBalance < 0)
-        : members,
-    [members, needsTopupOnly],
+  const inactiveCount = useMemo(
+    () => members.filter((member) => !isMemberActive(member)).length,
+    [members],
   );
+
+  const filteredMembers = useMemo(() => {
+    let result = members;
+    if (needsTopupOnly) {
+      result = result.filter((member) => member.remainingBalance < 0);
+    }
+    if (hideInactive) {
+      result = result.filter((member) => isMemberActive(member));
+    }
+    return result;
+  }, [members, needsTopupOnly, hideInactive]);
 
   const visibleMembers = useMemo(
     () => sortMembers(filteredMembers, sortKey, sortDir),
@@ -306,7 +368,7 @@ export function ClubMembersSettings({
   }
 
   const listLabel =
-    needsTopupOnly && needsTopupCount > 0
+    needsTopupOnly || hideInactive
       ? `${visibleMembers.length}/${members.length}`
       : String(members.length);
 
@@ -329,6 +391,16 @@ export function ClubMembersSettings({
                 onClick={() => setNeedsTopupOnly((value) => !value)}
               >
                 Cần đóng quỹ ({needsTopupCount})
+              </Button>
+            )}
+            {inactiveCount > 0 && (
+              <Button
+                type="button"
+                variant={hideInactive ? "default" : "outline"}
+                size="sm"
+                onClick={() => setHideInactive((value) => !value)}
+              >
+                Ẩn ngưng hoạt động ({inactiveCount})
               </Button>
             )}
             <Button size="sm" onClick={() => setAddOpen(true)}>
@@ -357,33 +429,22 @@ export function ClubMembersSettings({
                 <MobileDataEmpty>
                   {needsTopupOnly
                     ? "Không có thành viên cần đóng quỹ"
-                    : "Chưa có thành viên"}
+                    : hideInactive
+                      ? "Không có thành viên đang hoạt động"
+                      : "Chưa có thành viên"}
                 </MobileDataEmpty>
               ) : (
                 <MobileDataList>
                   {visibleMembers.map((member) => (
                     <MobileDataCard
                       key={member.id}
-                      title={
-                        <MemberNameLink
-                          clubId={clubId}
-                          memberId={member.id}
-                          name={member.name}
-                        />
-                      }
+                      title={<MemberNameCell clubId={clubId} member={member} />}
                       actions={
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() =>
-                            setEditingMember({
-                              id: member.id,
-                              name: member.name,
-                              rank: member.rank,
-                              gender: member.gender,
-                            })
-                          }
+                          onClick={() => setEditingMember(toEditableMember(member))}
                         >
                           Sửa
                         </Button>
@@ -519,12 +580,17 @@ export function ClubMembersSettings({
                       >
                         {needsTopupOnly
                           ? "Không có thành viên cần đóng quỹ"
-                          : "Chưa có thành viên"}
+                          : hideInactive
+                            ? "Không có thành viên đang hoạt động"
+                            : "Chưa có thành viên"}
                       </TableCell>
                     </TableRow>
                   ) : (
                     visibleMembers.map((member) => (
-                      <TableRow key={member.id}>
+                      <TableRow
+                        key={member.id}
+                        className={cn(!isMemberActive(member) && "opacity-60")}
+                      >
                         <TableCell>
                           {member.rank ? (
                             <Badge variant="secondary">{member.rank}</Badge>
@@ -535,11 +601,7 @@ export function ClubMembersSettings({
                           )}
                         </TableCell>
                         <TableCell>
-                          <MemberNameLink
-                            clubId={clubId}
-                            memberId={member.id}
-                            name={member.name}
-                          />
+                          <MemberNameCell clubId={clubId} member={member} />
                         </TableCell>
                         <TableCell className="text-right">
                           <SessionCount
@@ -583,14 +645,7 @@ export function ClubMembersSettings({
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={() =>
-                              setEditingMember({
-                                id: member.id,
-                                name: member.name,
-                                rank: member.rank,
-                                gender: member.gender,
-                              })
-                            }
+                            onClick={() => setEditingMember(toEditableMember(member))}
                           >
                             Sửa
                           </Button>
