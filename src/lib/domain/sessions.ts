@@ -99,8 +99,8 @@ export function calcSessionPerPersonCosts(
 ): SessionPerPersonCosts {
   const { courtRental, shuttleCost } = calcSessionCostParts(costInput);
 
-  let courtPayers = members.length + guests.length;
-  let shuttlePayers =
+  const courtPayers = members.length + guests.length;
+  const shuttlePayers =
     members.filter((member) => member.paysShuttleCost !== false).length +
     guests.length;
 

@@ -33,6 +33,9 @@ export function MultiSelect({
   className,
   id,
 }: MultiSelectProps) {
+  const [open, setOpen] = React.useState(false);
+  const listboxId = React.useId();
+
   const label = React.useMemo(() => {
     if (value.length === 0) return placeholder;
     if (value.length === 1) {
@@ -50,12 +53,14 @@ export function MultiSelect({
   }
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
           id={id}
           type="button"
           role="combobox"
+          aria-expanded={open}
+          aria-controls={listboxId}
           className={cn(
             triggerClassName,
             value.length === 0 && "text-[var(--color-muted-foreground)]",
@@ -67,6 +72,7 @@ export function MultiSelect({
         </button>
       </PopoverTrigger>
       <PopoverContent
+        id={listboxId}
         className="w-[var(--radix-popover-trigger-width)] p-2"
         align="start"
         sideOffset={4}
