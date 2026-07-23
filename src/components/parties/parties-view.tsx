@@ -4,6 +4,7 @@ import { useState, type Dispatch, type SetStateAction } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -91,11 +92,9 @@ function PartyFormFields({
       </div>
       <div className="space-y-2">
         <Label htmlFor="totalCost">Tổng chi phí</Label>
-        <Input
+        <CurrencyInput
           id="totalCost"
           name="totalCost"
-          type="number"
-          min={0}
           defaultValue={defaultValues?.totalCost ?? 0}
         />
       </div>

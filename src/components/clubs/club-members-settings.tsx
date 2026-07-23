@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
-import { ClubRole, type MemberRank } from "@prisma/client";
+import { ClubRole, type MemberGender, type MemberRank } from "@prisma/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,7 +36,11 @@ import {
   MemberEditDialog,
   type EditableMember,
 } from "@/components/clubs/member-edit-dialog";
-import { formatMemberRank, MEMBER_RANKS } from "@/lib/domain/member";
+import {
+  formatMemberGender,
+  formatMemberRank,
+  MEMBER_RANKS,
+} from "@/lib/domain/member";
 import { formatVND } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -84,6 +88,7 @@ type MemberRow = {
   id: string;
   name: string;
   rank: MemberRank | null;
+  gender: MemberGender | null;
   totalPaid: number;
   totalPlayCost: number;
   remainingBalance: number;
@@ -376,6 +381,7 @@ export function ClubMembersSettings({
                               id: member.id,
                               name: member.name,
                               rank: member.rank,
+                              gender: member.gender,
                             })
                           }
                         >
@@ -384,6 +390,9 @@ export function ClubMembersSettings({
                       }
                     >
                       <MobileDataFields>
+                        <MobileDataField label="Giới tính">
+                          {formatMemberGender(member.gender)}
+                        </MobileDataField>
                         <MobileDataField label="Hạng">
                           {member.rank ? (
                             <Badge variant="secondary">{member.rank}</Badge>
@@ -579,6 +588,7 @@ export function ClubMembersSettings({
                                 id: member.id,
                                 name: member.name,
                                 rank: member.rank,
+                                gender: member.gender,
                               })
                             }
                           >

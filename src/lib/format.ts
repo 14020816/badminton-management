@@ -2,8 +2,27 @@ import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import type { CourtType } from "@prisma/client";
 
+const currencyFormatter = new Intl.NumberFormat("vi-VN", {
+  maximumFractionDigits: 0,
+});
+
+export function formatCurrencyInput(amount: number | null | undefined): string {
+  if (amount === null || amount === undefined || !Number.isFinite(amount)) {
+    return "";
+  }
+  return currencyFormatter.format(amount);
+}
+
+export function parseCurrency(value: string): number {
+  if (!value.trim()) return 0;
+  const normalized = value.replace(/[^\d-]/g, "");
+  if (!normalized || normalized === "-") return 0;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? Math.round(parsed) : 0;
+}
+
 export function formatVND(amount: number): string {
-  return new Intl.NumberFormat("vi-VN").format(amount) + " ₫";
+  return formatCurrencyInput(amount) + " ₫";
 }
 
 export function formatDate(date: Date | string | null | undefined): string {

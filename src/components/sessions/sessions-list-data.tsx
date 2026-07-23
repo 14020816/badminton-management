@@ -20,7 +20,7 @@ import {
   ResponsiveDataView,
 } from "@/components/ui/mobile-data-list";
 import { summarizeSessionParticipants } from "@/components/sessions/session-participants-types";
-import type { EditableSession } from "@/components/sessions/session-edit-dialog";
+import { buildSessionEditPath } from "@/components/sessions/session-form-types";
 import type { SessionParticipantsData } from "@/components/sessions/session-participants-dialog";
 import { buildSessionDetailPath } from "@/lib/sessions-list-filters";
 import { formatCourtType, formatSessionDate, formatVND } from "@/lib/format";
@@ -55,40 +55,23 @@ function formatPerPersonAmount(session: SessionRow) {
   return min === max ? formatVND(min) : `${formatVND(min)} – ${formatVND(max)}`;
 }
 
-function toEditableSession(session: SessionRow): EditableSession {
-  return {
-    id: session.id,
-    date: session.date,
-    courtType: session.courtType ?? null,
-    courtRental: session.courtRental,
-    shuttlesUsed: session.shuttlesUsed,
-    shuttleTypeId: session.shuttleTypeId,
-    shuttlePricePerBlock: session.shuttlePricePerBlock,
-    scheduleId: session.scheduleId,
-    address: session.address,
-    googleAddressUrl: session.googleAddressUrl,
-    note: session.note,
-    shares: session.shares.map((share) => ({
-      memberId: share.memberId,
-      amount: share.amount,
-      water: share.water,
-      parking: share.parking,
-      extra: share.extra,
-      extraNote: share.extraNote,
-      memberPaysForGuests: share.memberPaysForGuests,
-      paysShuttleCost: share.paysShuttleCost,
-    })),
-    guests: session.guests.map((guest) => ({
-      id: guest.id,
-      name: guest.name,
-      amount: guest.amount,
-      water: guest.water,
-      parking: guest.parking,
-      extra: guest.extra,
-      extraNote: guest.extraNote,
-      hostedByMemberId: guest.hostedByMemberId,
-    })),
-  };
+function AdminActions({
+  editHref,
+  onDelete,
+}: {
+  editHref: string;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1">
+      <Button asChild variant="outline" size="sm">
+        <Link href={editHref}>Sửa</Link>
+      </Button>
+      <Button type="button" variant="destructive" size="sm" onClick={onDelete}>
+        Xóa
+      </Button>
+    </div>
+  );
 }
 
 function ParticipantsSummary({
@@ -125,37 +108,16 @@ function ParticipantsSummary({
   );
 }
 
-function AdminActions({
-  onEdit,
-  onDelete,
-}: {
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
-  return (
-    <div className="flex flex-wrap gap-1">
-      <Button type="button" variant="outline" size="sm" onClick={onEdit}>
-        Sửa
-      </Button>
-      <Button type="button" variant="destructive" size="sm" onClick={onDelete}>
-        Xóa
-      </Button>
-    </div>
-  );
-}
-
 export function SessionsListData({
   clubId,
   sessions,
   isAdmin,
-  onEdit,
   onDelete,
   onViewParticipants,
 }: {
   clubId: string;
   sessions: SessionRow[];
   isAdmin: boolean;
-  onEdit: (session: EditableSession) => void;
   onDelete: (session: { id: string; date: Date }) => void;
   onViewParticipants: (data: SessionParticipantsData) => void;
 }) {
@@ -188,7 +150,7 @@ export function SessionsListData({
               actions={
                 isAdmin ? (
                   <AdminActions
-                    onEdit={() => onEdit(toEditableSession(session))}
+                    editHref={buildSessionEditPath(clubId, session.id)}
                     onDelete={() =>
                       onDelete({ id: session.id, date: session.date })
                     }
@@ -285,7 +247,7 @@ export function SessionsListData({
                 {isAdmin && (
                   <TableCell>
                     <AdminActions
-                      onEdit={() => onEdit(toEditableSession(session))}
+                      editHref={buildSessionEditPath(clubId, session.id)}
                       onDelete={() =>
                         onDelete({ id: session.id, date: session.date })
                       }

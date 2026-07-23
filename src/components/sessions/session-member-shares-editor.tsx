@@ -4,11 +4,14 @@ import {
   Fragment,
   useEffect,
   useMemo,
+  useState,
   type Dispatch,
   type SetStateAction,
 } from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,6 +49,20 @@ type ShuttlePricing = {
 
 function createGuestId() {
   return `guest-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function patchAffectsMemberAmount(patch: Partial<ShareAllocationPayload>) {
+  return (
+    "water" in patch ||
+    "parking" in patch ||
+    "extra" in patch ||
+    "paysShuttleCost" in patch ||
+    "memberPaysForGuests" in patch
+  );
+}
+
+function patchAffectsGuestAmount(patch: Partial<GuestAllocationPayload>) {
+  return "water" in patch || "parking" in patch || "extra" in patch;
 }
 
 function toMemberInputs(allocations: ShareAllocationPayload[]) {
@@ -137,6 +154,7 @@ export function SessionMemberSharesEditor({
   guests: GuestAllocationPayload[];
   onGuestsChange: Dispatch<SetStateAction<GuestAllocationPayload[]>>;
 }) {
+  const [costTableOpen, setCostTableOpen] = useState(false);
   const costInput = useMemo(
     () => ({
       courtRental,
@@ -251,7 +269,7 @@ export function SessionMemberSharesEditor({
       const nextMembers = current.map((row) => {
         if (row.memberId !== memberId) return row;
         const updated = { ...row, ...patch };
-        if ("memberPaysForGuests" in patch || "paysShuttleCost" in patch) {
+        if (patchAffectsMemberAmount(patch)) {
           updated.amountCustom = false;
         }
         if (!updated.amountCustom) {
@@ -321,6 +339,9 @@ export function SessionMemberSharesEditor({
       current.map((guest) => {
         if (guest.clientId !== clientId) return guest;
         const updated = { ...guest, ...patch };
+        if (patchAffectsGuestAmount(patch)) {
+          updated.amountCustom = false;
+        }
         if (!updated.amountCustom) {
           updated.amount = calcGuestDefaultAmount(
             perPerson,
@@ -358,42 +379,21 @@ export function SessionMemberSharesEditor({
           + Thêm khách đi cùng
         </Button>
         <MobileEditorField label="Nước">
-          <Input
-            type="number"
-            min={0}
+          <CurrencyInput
             value={row.water}
-            onChange={(event) =>
-              updateRow(row.memberId, {
-                water: Number(event.target.value) || 0,
-              })
-            }
-            className="font-number text-right"
+            onValueChange={(water) => updateRow(row.memberId, { water })}
           />
         </MobileEditorField>
         <MobileEditorField label="Gửi xe">
-          <Input
-            type="number"
-            min={0}
+          <CurrencyInput
             value={row.parking}
-            onChange={(event) =>
-              updateRow(row.memberId, {
-                parking: Number(event.target.value) || 0,
-              })
-            }
-            className="font-number text-right"
+            onValueChange={(parking) => updateRow(row.memberId, { parking })}
           />
         </MobileEditorField>
         <MobileEditorField label="Khác">
-          <Input
-            type="number"
-            min={0}
+          <CurrencyInput
             value={row.extra}
-            onChange={(event) =>
-              updateRow(row.memberId, {
-                extra: Number(event.target.value) || 0,
-              })
-            }
-            className="font-number text-right"
+            onValueChange={(extra) => updateRow(row.memberId, { extra })}
           />
         </MobileEditorField>
         <MobileEditorField label="Ghi chú thêm">
@@ -440,12 +440,9 @@ export function SessionMemberSharesEditor({
           )}
         </MobileEditorField>
         <MobileEditorField label="Tổng">
-          <Input
-            type="number"
+          <CurrencyInput
             disabled
-            min={0}
             value={row.amount ?? 0}
-            className="font-number text-right"
           />
         </MobileEditorField>
       </div>
@@ -468,8 +465,8 @@ export function SessionMemberSharesEditor({
             value={guest.name}
             placeholder={
               guest.hostedByMemberId
-                ? "Tên khách (bạn, người nhà...)"
-                : "Tên khách không phải thành viên"
+                ? "Tên khách (tuỳ chọn)"
+                : "Tên khách (tuỳ chọn)"
             }
             onChange={(event) =>
               updateGuest(guest.clientId, { name: event.target.value })
@@ -477,45 +474,30 @@ export function SessionMemberSharesEditor({
           />
         </MobileEditorField>
         <MobileEditorField label="Nước">
-          <Input
-            type="number"
-            min={0}
+          <CurrencyInput
             value={guest.water}
             disabled={disabled}
-            onChange={(event) =>
-              updateGuest(guest.clientId, {
-                water: Number(event.target.value) || 0,
-              })
+            onValueChange={(water) =>
+              updateGuest(guest.clientId, { water })
             }
-            className="font-number text-right"
           />
         </MobileEditorField>
         <MobileEditorField label="Gửi xe">
-          <Input
-            type="number"
-            min={0}
+          <CurrencyInput
             value={guest.parking}
             disabled={disabled}
-            onChange={(event) =>
-              updateGuest(guest.clientId, {
-                parking: Number(event.target.value) || 0,
-              })
+            onValueChange={(parking) =>
+              updateGuest(guest.clientId, { parking })
             }
-            className="font-number text-right"
           />
         </MobileEditorField>
         <MobileEditorField label="Khác">
-          <Input
-            type="number"
-            min={0}
+          <CurrencyInput
             value={guest.extra}
             disabled={disabled}
-            onChange={(event) =>
-              updateGuest(guest.clientId, {
-                extra: Number(event.target.value) || 0,
-              })
+            onValueChange={(extra) =>
+              updateGuest(guest.clientId, { extra })
             }
-            className="font-number text-right"
           />
         </MobileEditorField>
         <MobileEditorField label="Ghi chú">
@@ -536,13 +518,7 @@ export function SessionMemberSharesEditor({
           </span>
         </MobileEditorField>
         <MobileEditorField label="Tổng">
-          <Input
-            type="number"
-            disabled
-            min={0}
-            value={guest.amount ?? 0}
-            className="font-number text-right"
-          />
+          <CurrencyInput disabled value={guest.amount ?? 0} />
         </MobileEditorField>
       </div>
     );
@@ -571,7 +547,19 @@ export function SessionMemberSharesEditor({
       {allocations.length > 0 && (
         <div className="space-y-3">
           <div className="flex flex-wrap items-end justify-between gap-2">
-            <Label>Chi phí theo người</Label>
+            <button
+              type="button"
+              className="flex items-center gap-1.5 text-left"
+              aria-expanded={costTableOpen}
+              onClick={() => setCostTableOpen((open) => !open)}
+            >
+              {costTableOpen ? (
+                <ChevronDown className="size-4 shrink-0 text-[var(--color-muted-foreground)]" />
+              ) : (
+                <ChevronRight className="size-4 shrink-0 text-[var(--color-muted-foreground)]" />
+              )}
+              <Label className="cursor-pointer">Chi phí theo người</Label>
+            </button>
             <p className="text-sm text-[var(--color-muted-foreground)]">
               Chia sân:{" "}
               <span className="font-number font-medium">
@@ -586,8 +574,10 @@ export function SessionMemberSharesEditor({
             </p>
           </div>
 
-          <div className="rounded-md border">
-            <ResponsiveDataView
+          {costTableOpen && (
+            <>
+              <div className="rounded-md border">
+                <ResponsiveDataView
               mobile={
                 <MobileDataList className="p-2">
                   {allocations.map((row) => {
@@ -704,42 +694,27 @@ export function SessionMemberSharesEditor({
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Input
-                                type="number"
-                                min={0}
+                              <CurrencyInput
                                 value={row.water}
-                                onChange={(event) =>
-                                  updateRow(row.memberId, {
-                                    water: Number(event.target.value) || 0,
-                                  })
+                                onValueChange={(water) =>
+                                  updateRow(row.memberId, { water })
                                 }
-                                className="font-number text-right"
                               />
                             </TableCell>
                             <TableCell>
-                              <Input
-                                type="number"
-                                min={0}
+                              <CurrencyInput
                                 value={row.parking}
-                                onChange={(event) =>
-                                  updateRow(row.memberId, {
-                                    parking: Number(event.target.value) || 0,
-                                  })
+                                onValueChange={(parking) =>
+                                  updateRow(row.memberId, { parking })
                                 }
-                                className="font-number text-right"
                               />
                             </TableCell>
                             <TableCell>
-                              <Input
-                                type="number"
-                                min={0}
+                              <CurrencyInput
                                 value={row.extra}
-                                onChange={(event) =>
-                                  updateRow(row.memberId, {
-                                    extra: Number(event.target.value) || 0,
-                                  })
+                                onValueChange={(extra) =>
+                                  updateRow(row.memberId, { extra })
                                 }
-                                className="font-number text-right"
                               />
                             </TableCell>
                             <TableCell>
@@ -784,12 +759,9 @@ export function SessionMemberSharesEditor({
                               )}
                             </TableCell>
                             <TableCell>
-                              <Input
-                                type="number"
+                              <CurrencyInput
                                 disabled
-                                min={0}
                                 value={row.amount ?? 0}
-                                className="font-number text-right"
                               />
                             </TableCell>
                             <TableCell />
@@ -803,7 +775,7 @@ export function SessionMemberSharesEditor({
                               <TableCell className="pl-8">
                                 <Input
                                   value={guest.name}
-                                  placeholder="Tên khách (bạn, người nhà...)"
+                                  placeholder="Tên khách (tuỳ chọn)"
                                   onChange={(event) =>
                                     updateGuest(guest.clientId, {
                                       name: event.target.value,
@@ -812,45 +784,30 @@ export function SessionMemberSharesEditor({
                                 />
                               </TableCell>
                               <TableCell>
-                                <Input
-                                  type="number"
-                                  min={0}
+                                <CurrencyInput
                                   value={guest.water}
                                   disabled={row.memberPaysForGuests}
-                                  onChange={(event) =>
-                                    updateGuest(guest.clientId, {
-                                      water: Number(event.target.value) || 0,
-                                    })
+                                  onValueChange={(water) =>
+                                    updateGuest(guest.clientId, { water })
                                   }
-                                  className="font-number text-right"
                                 />
                               </TableCell>
                               <TableCell>
-                                <Input
-                                  type="number"
-                                  min={0}
+                                <CurrencyInput
                                   value={guest.parking}
                                   disabled={row.memberPaysForGuests}
-                                  onChange={(event) =>
-                                    updateGuest(guest.clientId, {
-                                      parking: Number(event.target.value) || 0,
-                                    })
+                                  onValueChange={(parking) =>
+                                    updateGuest(guest.clientId, { parking })
                                   }
-                                  className="font-number text-right"
                                 />
                               </TableCell>
                               <TableCell>
-                                <Input
-                                  type="number"
-                                  min={0}
+                                <CurrencyInput
                                   value={guest.extra}
                                   disabled={row.memberPaysForGuests}
-                                  onChange={(event) =>
-                                    updateGuest(guest.clientId, {
-                                      extra: Number(event.target.value) || 0,
-                                    })
+                                  onValueChange={(extra) =>
+                                    updateGuest(guest.clientId, { extra })
                                   }
-                                  className="font-number text-right"
                                 />
                               </TableCell>
                               <TableCell>
@@ -874,12 +831,9 @@ export function SessionMemberSharesEditor({
                                   : "Trả trực tiếp"}
                               </TableCell>
                               <TableCell>
-                                <Input
-                                  type="number"
+                                <CurrencyInput
                                   disabled
-                                  min={0}
                                   value={guest.amount ?? 0}
-                                  className="font-number text-right"
                                 />
                               </TableCell>
                               <TableCell>
@@ -903,7 +857,7 @@ export function SessionMemberSharesEditor({
                         <TableCell>
                           <Input
                             value={guest.name}
-                            placeholder="Tên khách không phải thành viên"
+                            placeholder="Tên khách (tuỳ chọn)"
                             onChange={(event) =>
                               updateGuest(guest.clientId, {
                                 name: event.target.value,
@@ -912,42 +866,27 @@ export function SessionMemberSharesEditor({
                           />
                         </TableCell>
                         <TableCell>
-                          <Input
-                            type="number"
-                            min={0}
+                          <CurrencyInput
                             value={guest.water}
-                            onChange={(event) =>
-                              updateGuest(guest.clientId, {
-                                water: Number(event.target.value) || 0,
-                              })
+                            onValueChange={(water) =>
+                              updateGuest(guest.clientId, { water })
                             }
-                            className="font-number text-right"
                           />
                         </TableCell>
                         <TableCell>
-                          <Input
-                            type="number"
-                            min={0}
+                          <CurrencyInput
                             value={guest.parking}
-                            onChange={(event) =>
-                              updateGuest(guest.clientId, {
-                                parking: Number(event.target.value) || 0,
-                              })
+                            onValueChange={(parking) =>
+                              updateGuest(guest.clientId, { parking })
                             }
-                            className="font-number text-right"
                           />
                         </TableCell>
                         <TableCell>
-                          <Input
-                            type="number"
-                            min={0}
+                          <CurrencyInput
                             value={guest.extra}
-                            onChange={(event) =>
-                              updateGuest(guest.clientId, {
-                                extra: Number(event.target.value) || 0,
-                              })
+                            onValueChange={(extra) =>
+                              updateGuest(guest.clientId, { extra })
                             }
-                            className="font-number text-right"
                           />
                         </TableCell>
                         <TableCell>
@@ -968,13 +907,7 @@ export function SessionMemberSharesEditor({
                           Trả trực tiếp
                         </TableCell>
                         <TableCell>
-                          <Input
-                            type="number"
-                            disabled
-                            min={0}
-                            value={guest.amount ?? 0}
-                            className="font-number text-right"
-                          />
+                          <CurrencyInput disabled value={guest.amount ?? 0} />
                         </TableCell>
                         <TableCell>
                           <Button
@@ -992,21 +925,23 @@ export function SessionMemberSharesEditor({
                 </Table>
               }
             />
-          </div>
+              </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={addStandaloneGuest}
-            >
-              + Khách không phải thành viên
-            </Button>
-            <p className="text-xs text-[var(--color-muted-foreground)]">
-              Khách luôn trả trực tiếp, không tính vào quỹ thành viên.
-            </p>
-          </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addStandaloneGuest}
+                >
+                  + Khách không phải thành viên
+                </Button>
+                <p className="text-xs text-[var(--color-muted-foreground)]">
+                  Khách luôn trả trực tiếp, không tính vào quỹ thành viên.
+                </p>
+              </div>
+            </>
+          )}
 
           <p className="text-sm text-[var(--color-muted-foreground)]">
             Tổng buổi đánh:{" "}
@@ -1052,7 +987,7 @@ export function buildInitialShareAllocations(
     extra: share.extra ?? 0,
     extraNote: share.extraNote ?? null,
     amount: share.amount,
-    amountCustom: true,
+    amountCustom: false,
     memberPaysForGuests: share.memberPaysForGuests ?? false,
     paysShuttleCost: share.paysShuttleCost ?? true,
   }));
@@ -1079,6 +1014,6 @@ export function buildInitialGuestAllocations(
     extra: guest.extra ?? 0,
     extraNote: guest.extraNote ?? null,
     amount: guest.amount,
-    amountCustom: true,
+    amountCustom: false,
   }));
 }

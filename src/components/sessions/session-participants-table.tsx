@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/mobile-data-list";
 import { formatVND } from "@/lib/format";
 import type { SessionParticipantsData } from "@/components/sessions/session-participants-types";
-import { summarizeSessionParticipants } from "@/components/sessions/session-participants-types";
+import { summarizeSessionParticipants, formatGuestDisplayName } from "@/components/sessions/session-participants-types";
 
 function formatExtraAmount(value: number | undefined) {
   const amount = value ?? 0;
@@ -113,7 +113,7 @@ function ParticipantsMobileList({ session }: { session: SessionParticipantsData 
                 subdued
                 title={
                   <>
-                    {guest.name}
+                    {formatGuestDisplayName(guest.name)}
                     <span className="ml-1 text-xs font-normal text-[var(--color-muted-foreground)]">
                       (khách)
                     </span>
@@ -147,7 +147,7 @@ function ParticipantsMobileList({ session }: { session: SessionParticipantsData 
           key={guest.id}
           title={
             <>
-              {guest.name}
+              {formatGuestDisplayName(guest.name)}
               <span className="ml-1 text-xs font-normal text-[var(--color-muted-foreground)]">
                 (khách)
               </span>
@@ -221,7 +221,7 @@ function ParticipantsDesktopTable({ session }: { session: SessionParticipantsDat
                   className="bg-[var(--color-accent)]/40"
                 >
                   <TableCell className="pl-8">
-                    {guest.name}
+                    {formatGuestDisplayName(guest.name)}
                     <span className="ml-1 text-xs text-[var(--color-muted-foreground)]">
                       (khách)
                     </span>
@@ -253,7 +253,7 @@ function ParticipantsDesktopTable({ session }: { session: SessionParticipantsDat
         {standaloneGuests.map((guest) => (
           <TableRow key={guest.id}>
             <TableCell className="font-medium">
-              {guest.name}
+              {formatGuestDisplayName(guest.name)}
               <span className="ml-1 text-xs font-normal text-[var(--color-muted-foreground)]">
                 (khách)
               </span>

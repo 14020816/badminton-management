@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
@@ -149,11 +150,9 @@ export function SessionScheduleFormDialog({
               <Label htmlFor={`schedule-courtRental-${formKey}`} required>
                 Thuê sân
               </Label>
-              <Input
+              <CurrencyInput
                 id={`schedule-courtRental-${formKey}`}
                 name="courtRental"
-                type="number"
-                min={0}
                 required
                 defaultValue={defaults.courtRental}
               />

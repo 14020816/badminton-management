@@ -257,6 +257,7 @@ export async function updateSessionAction(
         date: parsed.date,
         courtType: parsed.courtType,
         shuttleTypeId: parsed.shuttleType.id,
+        shuttlePricePerBlock: parsed.shuttlePricePerBlock,
         shuttlesUsed: parsed.shuttlesUsed,
         courtRental: parsed.courtRental,
         water: parsed.water,
@@ -275,6 +276,7 @@ export async function updateSessionAction(
             extra: share.extra,
             extraNote: share.extraNote,
             memberPaysForGuests: share.memberPaysForGuests,
+            paysShuttleCost: share.paysShuttleCost,
           })),
         },
         guests: {
@@ -294,6 +296,7 @@ export async function updateSessionAction(
 
   clubPaths(clubId).forEach((p) => revalidatePath(p));
   revalidatePath(`/g/${clubId}/sessions/${sessionId}`);
+  revalidatePath(`/g/${clubId}/sessions/${sessionId}/edit`);
 }
 
 export async function deleteSessionAction(clubId: string, id: string) {
@@ -402,7 +405,7 @@ export async function getSessions(clubId: string, memberId?: string) {
 const sessionDetailInclude = {
   ...sessionListInclude,
   schedule: {
-    select: { id: true, startTime: true, endTime: true },
+    select: { id: true, startTime: true, endTime: true, weekdays: true },
   },
 } as const;
 

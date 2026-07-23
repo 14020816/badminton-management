@@ -3,6 +3,7 @@
 import { useMemo, type Dispatch, type SetStateAction } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import {
   Table,
@@ -113,16 +114,11 @@ export function PartyMemberCostsEditor({
                       <MobileDataCard key={row.memberId} title={member.name}>
                         <div className="space-y-3">
                           <MobileEditorField label="Số tiền">
-                            <Input
-                              type="number"
-                              min={0}
+                            <CurrencyInput
                               value={row.amount}
-                              onChange={(event) =>
-                                updateRow(row.memberId, {
-                                  amount: Number(event.target.value) || 0,
-                                })
+                              onValueChange={(amount) =>
+                                updateRow(row.memberId, { amount })
                               }
-                              className="font-number text-right"
                             />
                           </MobileEditorField>
                           <MobileEditorField label="Tính vào quỹ">
@@ -167,16 +163,11 @@ export function PartyMemberCostsEditor({
                             {member.name}
                           </TableCell>
                           <TableCell>
-                            <Input
-                              type="number"
-                              min={0}
+                            <CurrencyInput
                               value={row.amount}
-                              onChange={(event) =>
-                                updateRow(row.memberId, {
-                                  amount: Number(event.target.value) || 0,
-                                })
+                              onValueChange={(amount) =>
+                                updateRow(row.memberId, { amount })
                               }
-                              className="font-number text-right"
                             />
                           </TableCell>
                           <TableCell className="text-center">

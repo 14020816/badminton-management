@@ -9,6 +9,7 @@ import {
 } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import {
   Table,
@@ -214,17 +215,11 @@ export function TournamentMemberCostsEditor({
                               </MobileDataField>
                             </MobileDataFields>
                             <MobileEditorField label="Chi phí thêm">
-                              <Input
-                                type="number"
-                                min={0}
+                              <CurrencyInput
                                 value={row.additionalCost}
-                                onChange={(event) =>
-                                  updateRow(row.memberId, {
-                                    additionalCost:
-                                      Number(event.target.value) || 0,
-                                  })
+                                onValueChange={(additionalCost) =>
+                                  updateRow(row.memberId, { additionalCost })
                                 }
-                                className="font-number text-right"
                               />
                             </MobileEditorField>
                             <MobileEditorField label="Ghi chú">
@@ -327,16 +322,11 @@ export function TournamentMemberCostsEditor({
                               {formatVND(row.shareCost)}
                             </TableCell>
                             <TableCell>
-                              <Input
-                                type="number"
-                                min={0}
+                              <CurrencyInput
                                 value={row.additionalCost}
-                                onChange={(event) =>
-                                  updateRow(row.memberId, {
-                                    additionalCost: Number(event.target.value) || 0,
-                                  })
+                                onValueChange={(additionalCost) =>
+                                  updateRow(row.memberId, { additionalCost })
                                 }
-                                className="font-number text-right"
                               />
                             </TableCell>
                             <TableCell className="font-number text-right text-[var(--color-muted-foreground)]">

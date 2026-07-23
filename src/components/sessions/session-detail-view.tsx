@@ -8,10 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/layout/page-header";
 import { AddressDisplay } from "@/components/form/address-fields";
-import {
-  SessionEditDialog,
-  type EditableSession,
-} from "@/components/sessions/session-edit-dialog";
+import { buildSessionEditPath } from "@/components/sessions/session-form-types";
 import { SessionDeleteDialog } from "@/components/sessions/session-delete-dialog";
 import {
   SessionParticipantsSummary,
@@ -21,15 +18,6 @@ import { summarizeSessionParticipants } from "@/components/sessions/session-part
 import { formatScheduleTimeRange } from "@/lib/domain/schedule";
 import { buildSessionListPath } from "@/lib/sessions-list-filters";
 import { formatCourtType, formatSessionDate, formatVND } from "@/lib/format";
-
-type ShuttleTypeOption = {
-  id: string;
-  name: string;
-  pricePerBlock: number;
-  shuttlesPerBlock: number;
-};
-
-type MemberOption = { id: string; name: string };
 
 export type SessionDetailData = {
   id: string;
@@ -76,19 +64,14 @@ export type SessionDetailData = {
 export function SessionDetailView({
   clubId,
   session,
-  members,
-  shuttleTypes,
   isAdmin,
   backHref,
 }: {
   clubId: string;
   session: SessionDetailData;
-  members: MemberOption[];
-  shuttleTypes: ShuttleTypeOption[];
   isAdmin: boolean;
   backHref: string;
 }) {
-  const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const participants = {
@@ -102,40 +85,6 @@ export function SessionDetailView({
   };
 
   const { guestCount } = summarizeSessionParticipants(participants);
-
-  const editableSession: EditableSession = {
-    id: session.id,
-    date: session.date,
-    courtType: session.courtType,
-    courtRental: session.courtRental,
-    shuttlesUsed: session.shuttlesUsed,
-    shuttleTypeId: session.shuttleTypeId,
-    shuttlePricePerBlock: session.shuttlePricePerBlock,
-    scheduleId: session.scheduleId,
-    address: session.address,
-    googleAddressUrl: session.googleAddressUrl,
-    note: session.note,
-    shares: session.shares.map((share) => ({
-      memberId: share.memberId,
-      amount: share.amount,
-      water: share.water,
-      parking: share.parking,
-      extra: share.extra,
-      extraNote: share.extraNote,
-      memberPaysForGuests: share.memberPaysForGuests,
-      paysShuttleCost: share.paysShuttleCost,
-    })),
-    guests: session.guests.map((guest) => ({
-      id: guest.id,
-      name: guest.name,
-      amount: guest.amount,
-      water: guest.water,
-      parking: guest.parking,
-      extra: guest.extra,
-      extraNote: guest.extraNote,
-      hostedByMemberId: guest.hostedByMemberId,
-    })),
-  };
 
   return (
     <div className="space-y-6">
@@ -161,8 +110,8 @@ export function SessionDetailView({
         )}
         {isAdmin && (
           <>
-            <Button type="button" size="sm" onClick={() => setEditing(true)}>
-              Sửa
+            <Button asChild size="sm">
+              <Link href={buildSessionEditPath(clubId, session.id)}>Sửa</Link>
             </Button>
             <Button
               type="button"
@@ -284,15 +233,6 @@ export function SessionDetailView({
           <SessionParticipantsTable session={participants} />
         </CardContent>
       </Card>
-
-      <SessionEditDialog
-        clubId={clubId}
-        session={editableSession}
-        members={members}
-        shuttleTypes={shuttleTypes}
-        open={editing}
-        onOpenChange={setEditing}
-      />
 
       <SessionDeleteDialog
         clubId={clubId}

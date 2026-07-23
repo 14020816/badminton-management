@@ -60,11 +60,7 @@ export function DatePicker({
           <CalendarIcon className="h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent
-        data-slot="popover-content"
-        className="w-auto p-0"
-        align={align}
-      >
+      <PopoverContent className="w-auto p-0" align={align}>
         <Calendar
           mode="single"
           selected={value}

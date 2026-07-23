@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
 import { FormSelect } from "@/components/form/form-select";
 import { createMemberAction } from "@/actions/members";
-import { MEMBER_RANKS } from "@/lib/domain/member";
+import { MEMBER_GENDERS, MEMBER_RANKS } from "@/lib/domain/member";
 
 export function MemberAddDialog({
   clubId,
@@ -57,6 +57,22 @@ export function MemberAddDialog({
               options={[
                 { value: "", label: "Chưa xếp hạng" },
                 ...MEMBER_RANKS.map((rank) => ({ value: rank, label: rank })),
+              ]}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="add-member-gender">Giới tính</Label>
+            <FormSelect
+              id="add-member-gender"
+              name="gender"
+              defaultValue=""
+              placeholder="Chưa khai báo"
+              options={[
+                { value: "", label: "Chưa khai báo" },
+                ...MEMBER_GENDERS.map((g) => ({
+                  value: g,
+                  label: g === "MALE" ? "Nam" : "Nữ",
+                })),
               ]}
             />
           </div>

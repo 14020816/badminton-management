@@ -63,6 +63,21 @@ export function formatScheduleLabel(schedule: {
   return `${formatWeekdays(schedule.weekdays)} · ${formatScheduleTimeRange(schedule.startTime, schedule.endTime)} · ${formatCourtType(schedule.courtType)}`;
 }
 
+export function getFulfilledForSessionEdit(
+  fulfilled: { scheduleId: string; date: string | Date }[],
+  session: { scheduleId: string | null; date: Date },
+) {
+  if (!session.scheduleId) return fulfilled;
+
+  return fulfilled.filter(
+    (entry) =>
+      !(
+        entry.scheduleId === session.scheduleId &&
+        isSameDay(new Date(entry.date), session.date)
+      ),
+  );
+}
+
 export function isDateMatchingSchedule(date: Date, weekdays: number[]): boolean {
   return weekdays.includes(date.getDay());
 }

@@ -3,6 +3,7 @@
 import { type Dispatch, type SetStateAction } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -164,16 +165,11 @@ export function TournamentExpensesEditor({
                         </Select>
                       </MobileEditorField>
                       <MobileEditorField label="Tiền">
-                        <Input
-                          type="number"
-                          min={0}
-                          value={expense.amount || ""}
+                        <CurrencyInput
+                          value={expense.amount}
                           placeholder="Số tiền"
-                          className="font-number text-right"
-                          onChange={(event) =>
-                            updateExpense(expense.clientId, {
-                              amount: Number(event.target.value) || 0,
-                            })
+                          onValueChange={(amount) =>
+                            updateExpense(expense.clientId, { amount })
                           }
                         />
                       </MobileEditorField>
@@ -243,16 +239,11 @@ export function TournamentExpensesEditor({
                         </Select>
                       </TableCell>
                       <TableCell>
-                        <Input
-                          type="number"
-                          min={0}
-                          value={expense.amount || ""}
+                        <CurrencyInput
+                          value={expense.amount}
                           placeholder="Số tiền"
-                          className="font-number text-right"
-                          onChange={(event) =>
-                            updateExpense(expense.clientId, {
-                              amount: Number(event.target.value) || 0,
-                            })
+                          onValueChange={(amount) =>
+                            updateExpense(expense.clientId, { amount })
                           }
                         />
                       </TableCell>

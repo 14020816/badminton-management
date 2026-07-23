@@ -30,6 +30,11 @@ export type SessionParticipantsData = {
   }[];
 };
 
+export function formatGuestDisplayName(name: string | null | undefined) {
+  const trimmed = name?.trim();
+  return trimmed || "Khách";
+}
+
 export function summarizeSessionParticipants(session: {
   shares: SessionParticipantsData["shares"];
   guests: SessionParticipantsData["guests"];

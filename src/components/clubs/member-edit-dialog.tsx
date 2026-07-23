@@ -1,6 +1,6 @@
 "use client";
 
-import type { MemberRank } from "@prisma/client";
+import type { MemberGender, MemberRank } from "@prisma/client";
 import {
   Dialog,
   DialogContent,
@@ -14,12 +14,13 @@ import { Label } from "@/components/ui/label";
 import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
 import { FormSelect } from "@/components/form/form-select";
 import { updateMemberAction } from "@/actions/members";
-import { MEMBER_RANKS } from "@/lib/domain/member";
+import { MEMBER_GENDERS, MEMBER_RANKS } from "@/lib/domain/member";
 
 export type EditableMember = {
   id: string;
   name: string;
   rank: MemberRank | null;
+  gender: MemberGender | null;
 };
 
 export function MemberEditDialog({
@@ -69,6 +70,22 @@ export function MemberEditDialog({
               options={[
                 { value: "", label: "Chưa xếp hạng" },
                 ...MEMBER_RANKS.map((rank) => ({ value: rank, label: rank })),
+              ]}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor={`edit-member-gender-${member.id}`}>Giới tính</Label>
+            <FormSelect
+              id={`edit-member-gender-${member.id}`}
+              name="gender"
+              defaultValue={member.gender ?? ""}
+              placeholder="Chưa khai báo"
+              options={[
+                { value: "", label: "Chưa khai báo" },
+                ...MEMBER_GENDERS.map((g) => ({
+                  value: g,
+                  label: g === "MALE" ? "Nam" : "Nữ",
+                })),
               ]}
             />
           </div>

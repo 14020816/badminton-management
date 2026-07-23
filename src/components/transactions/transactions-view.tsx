@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import {
   Table,
@@ -97,6 +98,7 @@ export function TransactionsView({
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(
     null,
   );
+  const [tab, setTab] = useState("expense");
 
   return (
     <div className="space-y-6">
@@ -105,59 +107,114 @@ export function TransactionsView({
         description="Quản lý khoản chi và khoản thu"
       />
 
-      <Tabs defaultValue="expense" className="min-w-0">
+      <Tabs value={tab} onValueChange={setTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="expense">Khoản chi ({expenses.length})</TabsTrigger>
           <TabsTrigger value="income">Khoản thu ({incomes.length})</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="expense" className="space-y-4">
-          {isAdmin && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Thêm khoản chi</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <MutationForm
-                  action={createExpenseAction.bind(null, clubId)}
-                  successMessage="Đã thêm khoản chi"
-                  className="grid gap-4 md:grid-cols-2"
-                >
-                  <div className="space-y-2">
-                    <Label htmlFor="exp-date">Ngày</Label>
-                    <Input id="exp-date" name="date" type="date" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="exp-amount">Số tiền</Label>
-                    <Input id="exp-amount" name="amount" type="number" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="exp-category">Loại</Label>
-                    <FormSelect
-                      id="exp-category"
-                      name="category"
-                      defaultValue="COURT_RENTAL"
-                      options={Object.entries(EXPENSE_CATEGORY_LABELS).map(
-                        ([code, label]) => ({ value: code, label }),
-                      )}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="exp-quantity">Số lượng cầu</Label>
-                    <Input id="exp-quantity" name="quantity" type="number" />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="exp-description">Mô tả</Label>
-                    <Input id="exp-description" name="description" />
-                  </div>
-                  <div>
-                    <SubmitButton pendingText="Đang lưu...">Lưu khoản chi</SubmitButton>
-                  </div>
-                </MutationForm>
-              </CardContent>
-            </Card>
-          )}
+        {isAdmin && tab === "expense" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Thêm khoản chi</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <MutationForm
+                action={createExpenseAction.bind(null, clubId)}
+                successMessage="Đã thêm khoản chi"
+                className="grid gap-4 md:grid-cols-2"
+              >
+                <div className="space-y-2">
+                  <Label htmlFor="exp-date">Ngày</Label>
+                  <Input id="exp-date" name="date" type="date" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="exp-amount">Số tiền</Label>
+                  <CurrencyInput id="exp-amount" name="amount" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="exp-category">Loại</Label>
+                  <FormSelect
+                    id="exp-category"
+                    name="category"
+                    defaultValue="COURT_RENTAL"
+                    options={Object.entries(EXPENSE_CATEGORY_LABELS).map(
+                      ([code, label]) => ({ value: code, label }),
+                    )}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="exp-quantity">Số lượng cầu</Label>
+                  <Input id="exp-quantity" name="quantity" type="number" />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="exp-description">Mô tả</Label>
+                  <Input id="exp-description" name="description" />
+                </div>
+                <div>
+                  <SubmitButton pendingText="Đang lưu...">Lưu khoản chi</SubmitButton>
+                </div>
+              </MutationForm>
+            </CardContent>
+          </Card>
+        )}
 
+        {isAdmin && tab === "income" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Thêm khoản thu</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <MutationForm
+                action={createIncomeAction.bind(null, clubId)}
+                successMessage="Đã thêm khoản thu"
+                className="grid gap-4 md:grid-cols-2"
+              >
+                <div className="space-y-2">
+                  <Label htmlFor="inc-date">Ngày</Label>
+                  <Input id="inc-date" name="date" type="date" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="inc-amount">Số tiền</Label>
+                  <CurrencyInput id="inc-amount" name="amount" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="inc-member">Người đóng</Label>
+                  <FormSelect
+                    id="inc-member"
+                    name="memberId"
+                    required
+                    placeholder="Chọn lông thủ"
+                    options={members.map((member) => ({
+                      value: member.id,
+                      label: member.name,
+                    }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="inc-category">Loại</Label>
+                  <FormSelect
+                    id="inc-category"
+                    name="category"
+                    defaultValue="FUND_CONTRIBUTION"
+                    options={Object.entries(INCOME_CATEGORY_LABELS).map(
+                      ([code, label]) => ({ value: code, label }),
+                    )}
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="inc-note">Ghi chú</Label>
+                  <Input id="inc-note" name="note" />
+                </div>
+                <div>
+                  <SubmitButton pendingText="Đang lưu...">Lưu khoản thu</SubmitButton>
+                </div>
+              </MutationForm>
+            </CardContent>
+          </Card>
+        )}
+
+        <TabsContent value="expense">
           <Card>
             <CardContent className="pt-6">
               <ResponsiveDataView
@@ -256,62 +313,7 @@ export function TransactionsView({
           </Card>
         </TabsContent>
 
-        <TabsContent value="income" className="space-y-4">
-          {isAdmin && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Thêm khoản thu</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <MutationForm
-                  action={createIncomeAction.bind(null, clubId)}
-                  successMessage="Đã thêm khoản thu"
-                  className="grid gap-4 md:grid-cols-2"
-                >
-                  <div className="space-y-2">
-                    <Label htmlFor="inc-date">Ngày</Label>
-                    <Input id="inc-date" name="date" type="date" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="inc-amount">Số tiền</Label>
-                    <Input id="inc-amount" name="amount" type="number" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="inc-member">Người đóng</Label>
-                    <FormSelect
-                      id="inc-member"
-                      name="memberId"
-                      required
-                      placeholder="Chọn lông thủ"
-                      options={members.map((member) => ({
-                        value: member.id,
-                        label: member.name,
-                      }))}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="inc-category">Loại</Label>
-                    <FormSelect
-                      id="inc-category"
-                      name="category"
-                      defaultValue="FUND_CONTRIBUTION"
-                      options={Object.entries(INCOME_CATEGORY_LABELS).map(
-                        ([code, label]) => ({ value: code, label }),
-                      )}
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="inc-note">Ghi chú</Label>
-                    <Input id="inc-note" name="note" />
-                  </div>
-                  <div>
-                    <SubmitButton pendingText="Đang lưu...">Lưu khoản thu</SubmitButton>
-                  </div>
-                </MutationForm>
-              </CardContent>
-            </Card>
-          )}
-
+        <TabsContent value="income">
           <Card>
             <CardContent className="pt-6">
               <ResponsiveDataView

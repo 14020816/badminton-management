@@ -13,10 +13,6 @@ import {
   type SessionListFilters,
 } from "@/lib/sessions-list-filters";
 import { SessionsListFilters } from "@/components/sessions/sessions-list-filters";
-import {
-  SessionEditDialog,
-  type EditableSession,
-} from "@/components/sessions/session-edit-dialog";
 import { SessionDeleteDialog } from "@/components/sessions/session-delete-dialog";
 import {
   SessionParticipantsDialog,
@@ -65,12 +61,6 @@ type Session = {
 };
 
 type MemberOption = { id: string; name: string };
-type ShuttleTypeOption = {
-  id: string;
-  name: string;
-  pricePerBlock: number;
-  shuttlesPerBlock: number;
-};
 
 export function SessionsListView({
   clubId,
@@ -79,7 +69,6 @@ export function SessionsListView({
   total,
   totalPages,
   members,
-  shuttleTypes,
   isAdmin,
   showMemberFilter,
 }: {
@@ -89,11 +78,9 @@ export function SessionsListView({
   total: number;
   totalPages: number;
   members: MemberOption[];
-  shuttleTypes: ShuttleTypeOption[];
   isAdmin: boolean;
   showMemberFilter: boolean;
 }) {
-  const [editingSession, setEditingSession] = useState<EditableSession | null>(null);
   const [deletingSession, setDeletingSession] = useState<{
     id: string;
     date: Date;
@@ -151,7 +138,6 @@ export function SessionsListView({
               clubId={clubId}
               sessions={sessions}
               isAdmin={isAdmin}
-              onEdit={setEditingSession}
               onDelete={setDeletingSession}
               onViewParticipants={setViewingParticipants}
             />
@@ -200,17 +186,6 @@ export function SessionsListView({
           )}
         </CardContent>
       </Card>
-
-      <SessionEditDialog
-        clubId={clubId}
-        session={editingSession}
-        members={members}
-        shuttleTypes={shuttleTypes}
-        open={editingSession !== null}
-        onOpenChange={(open) => {
-          if (!open) setEditingSession(null);
-        }}
-      />
 
       <SessionParticipantsDialog
         session={viewingParticipants}

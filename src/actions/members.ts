@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireClubAdmin, requireClubViewAccess } from "@/lib/club-context";
-import { parseMemberRank } from "@/lib/domain/member";
+import { parseMemberGender, parseMemberRank } from "@/lib/domain/member";
 import { loadMembersSettingsData } from "@/lib/data/members-settings";
 
 function settingsPaths(clubId: string) {
@@ -20,6 +20,7 @@ export async function createMemberAction(clubId: string, formData: FormData) {
 
   const name = String(formData.get("name") ?? "").trim();
   const rank = parseMemberRank(String(formData.get("rank") ?? ""));
+  const gender = parseMemberGender(String(formData.get("gender") ?? ""));
   if (!name) throw new Error("Tên không được để trống");
 
   const existing = await db.member.findUnique({
@@ -28,7 +29,7 @@ export async function createMemberAction(clubId: string, formData: FormData) {
   if (existing) throw new Error("Thành viên này đã tồn tại");
 
   await db.member.create({
-    data: { clubId, name, rank },
+    data: { clubId, name, rank, gender },
   });
 
   settingsPaths(clubId).forEach((path) => revalidatePath(path));
@@ -43,6 +44,7 @@ export async function updateMemberAction(
 
   const name = String(formData.get("name") ?? "").trim();
   const rank = parseMemberRank(String(formData.get("rank") ?? ""));
+  const gender = parseMemberGender(String(formData.get("gender") ?? ""));
   if (!name) throw new Error("Tên không được để trống");
 
   const member = await db.member.findFirst({
@@ -57,7 +59,7 @@ export async function updateMemberAction(
 
   await db.member.update({
     where: { id: memberId },
-    data: { name, rank },
+    data: { name, rank, gender },
   });
 
   settingsPaths(clubId).forEach((path) => revalidatePath(path));

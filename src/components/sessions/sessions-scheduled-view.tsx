@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { CourtType } from "@prisma/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/layout/page-header";
 import { MutationForm, SubmitButton } from "@/components/form/mutation-form";
@@ -222,16 +223,12 @@ export function SessionsScheduledView({
                   <Label htmlFor="scheduled-courtRental" required>
                     Thuê sân
                   </Label>
-                  <Input
+                  <CurrencyInput
                     id="scheduled-courtRental"
                     name="courtRental"
-                    type="number"
-                    min={0}
                     required
                     value={courtRental}
-                    onChange={(event) =>
-                      setCourtRental(Number(event.target.value))
-                    }
+                    onValueChange={setCourtRental}
                   />
                 </div>
                 <div className="space-y-2">
@@ -270,16 +267,12 @@ export function SessionsScheduledView({
                   <Label htmlFor="scheduled-shuttlePricePerBlock" required>
                     Giá cầu (một hộp)
                   </Label>
-                  <Input
+                  <CurrencyInput
                     id="scheduled-shuttlePricePerBlock"
                     name="shuttlePricePerBlock"
-                    type="number"
-                    min={0}
                     required
                     value={shuttlePricePerBlock}
-                    onChange={(event) =>
-                      setShuttlePricePerBlock(Number(event.target.value) || 0)
-                    }
+                    onValueChange={setShuttlePricePerBlock}
                   />
                   {selectedShuttleType && (
                     <p className="text-xs text-[var(--color-muted-foreground)]">

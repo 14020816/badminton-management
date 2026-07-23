@@ -44,6 +44,30 @@ enum MemberRank {
   D
 }
 
+enum MemberGender {
+  MALE
+  FEMALE
+}
+
+enum TournamentFormat {
+  AB_PAIRS
+  ROUND_ROBIN
+}
+
+enum MatchCategory {
+  MENS_SINGLES
+  WOMENS_SINGLES
+  MENS_DOUBLES
+  WOMENS_DOUBLES
+  MIXED_DOUBLES
+}
+
+enum MatchStatus {
+  SCHEDULED
+  COMPLETED
+  WALKOVER
+}
+
 model User {
   id            String            @id @default(cuid())
   name          String?
@@ -171,6 +195,7 @@ model Member {
   clubId            String
   name              String
   rank              MemberRank?
+  gender            MemberGender?
   aliases           String[]            @default([])
   club              Club                @relation(fields: [clubId], references: [id], onDelete: Cascade)
   membership        ClubMembership?
@@ -181,6 +206,10 @@ model Member {
   tournamentGroupB  TournamentBracket[] @relation("GroupB")
   tournamentMembers TournamentMember[]
   tournamentExpensesPaid TournamentExpense[] @relation("ExpensePaidBy")
+  tournamentMatchHome TournamentMatch[] @relation("MatchHome")
+  tournamentMatchAway TournamentMatch[] @relation("MatchAway")
+  tournamentMatchHome2 TournamentMatch[] @relation("MatchHome2")
+  tournamentMatchAway2 TournamentMatch[] @relation("MatchAway2")
   partyMembers      PartyMember[]
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
@@ -294,19 +323,56 @@ model Transaction {
 }
 
 model Tournament {
-  id        String               @id @default(cuid())
-  clubId    String
-  name      String
-  date      DateTime?
-  note      String?
-  club      Club                 @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  brackets  TournamentBracket[]
-  members   TournamentMember[]
-  expenses  TournamentExpense[]
-  createdAt DateTime             @default(now())
-  updatedAt DateTime             @updatedAt
+  id                  String               @id @default(cuid())
+  clubId              String
+  name                String
+  date                DateTime?
+  note                String?
+  format              TournamentFormat?
+  scheduleGeneratedAt DateTime?
+  config              Json?
+  club                Club                 @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  brackets            TournamentBracket[]
+  members             TournamentMember[]
+  expenses            TournamentExpense[]
+  matches             TournamentMatch[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 
   @@index([clubId])
+}
+
+model TournamentMatch {
+  id             String              @id @default(cuid())
+  tournamentId   String
+  order          Int
+  round          Int?
+  groupLabel     String?
+  category       MatchCategory
+  status         MatchStatus         @default(SCHEDULED)
+  homeMemberId   String?
+  awayMemberId   String?
+  homeMember2Id  String?
+  awayMember2Id  String?
+  tournament     Tournament          @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  homeMember     Member?             @relation("MatchHome", fields: [homeMemberId], references: [id], onDelete: Restrict)
+  awayMember     Member?             @relation("MatchAway", fields: [awayMemberId], references: [id], onDelete: Restrict)
+  homeMember2    Member?             @relation("MatchHome2", fields: [homeMember2Id], references: [id], onDelete: Restrict)
+  awayMember2    Member?             @relation("MatchAway2", fields: [awayMember2Id], references: [id], onDelete: Restrict)
+  sets           TournamentMatchSet[]
+
+  @@index([tournamentId, order])
+}
+
+model TournamentMatchSet {
+  id        String          @id @default(cuid())
+  matchId   String
+  setNumber Int
+  homeScore Int?
+  awayScore Int?
+  match     TournamentMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, setNumber])
 }
 
 model TournamentBracket {

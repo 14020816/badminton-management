@@ -257,6 +257,16 @@ export async function getTournaments(clubId: string) {
         expenses: {
           include: { paidByMember: true },
         },
+        matches: {
+          include: {
+            homeMember: true,
+            awayMember: true,
+            homeMember2: true,
+            awayMember2: true,
+            sets: { orderBy: { setNumber: "asc" } },
+          },
+          orderBy: { order: "asc" },
+        },
       },
       orderBy: [{ date: "desc" }, { createdAt: "desc" }],
     }),

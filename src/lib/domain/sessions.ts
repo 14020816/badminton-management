@@ -92,37 +92,17 @@ export function calcCostPerPerson(
   return Math.round(totalCost / attendeeCount);
 }
 
-function guestPaysDirectly(
-  guest: GuestShareInput,
-  memberPaysMap: Map<string, boolean>,
-): boolean {
-  if (!guest.hostedByMemberId) return true;
-  return !(memberPaysMap.get(guest.hostedByMemberId) ?? false);
-}
-
 export function calcSessionPerPersonCosts(
   costInput: SessionCostInput,
   members: MemberShareInput[],
   guests: GuestShareInput[],
 ): SessionPerPersonCosts {
   const { courtRental, shuttleCost } = calcSessionCostParts(costInput);
-  const memberPaysMap = new Map(
-    members.map((member) => [
-      member.memberId,
-      member.memberPaysForGuests ?? false,
-    ]),
-  );
 
-  let courtPayers = members.length;
-  let shuttlePayers = members.filter(
-    (member) => member.paysShuttleCost !== false,
-  ).length;
-
-  for (const guest of guests) {
-    if (!guestPaysDirectly(guest, memberPaysMap)) continue;
-    courtPayers += 1;
-    shuttlePayers += 1;
-  }
+  let courtPayers = members.length + guests.length;
+  let shuttlePayers =
+    members.filter((member) => member.paysShuttleCost !== false).length +
+    guests.length;
 
   return {
     courtPayers,
@@ -393,9 +373,6 @@ export function parseGuestAllocations(raw: string): GuestShareInput[] {
 
     const row = entry as GuestAllocationPayload;
     const name = String(row.name ?? "").trim();
-    if (!name) {
-      throw new Error("Nhập tên cho tất cả khách tham gia");
-    }
 
     guests.push({
       name,

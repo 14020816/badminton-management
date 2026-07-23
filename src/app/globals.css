@@ -112,6 +112,8 @@
 
 html {
   overflow-x: hidden;
+  /* Reserve scrollbar space so Radix Select/Dialog scroll-lock doesn't shrink page width */
+  scrollbar-gutter: stable;
 }
 
 body {

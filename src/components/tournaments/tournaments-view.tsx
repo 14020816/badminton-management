@@ -43,21 +43,42 @@ import {
 } from "@/components/tournaments/tournament-expenses-editor";
 import { formatDate, formatDateInput, formatVND } from "@/lib/format";
 import { calcTournamentMemberCredit } from "@/lib/domain/tournaments";
+import type { TournamentFormat } from "@prisma/client";
+import type { TournamentScheduleConfig } from "@/lib/domain/tournament-match";
+import { TOURNAMENT_FORMAT_LABELS } from "@/lib/domain/tournament-match";
+import { TournamentScheduleGenerator } from "@/components/tournaments/tournament-schedule-generator";
+import {
+  TournamentMatchesTable,
+  type TournamentMatchRow,
+} from "@/components/tournaments/tournament-matches-table";
+import { TournamentBracketsEditor } from "@/components/tournaments/tournament-brackets-editor";
+import type { MemberGender, MemberRank } from "@prisma/client";
 
-type Member = { id: string; name: string };
+type Member = {
+  id: string;
+  name: string;
+  rank: MemberRank | null;
+  gender: MemberGender | null;
+};
 
 type Tournament = {
   id: string;
   name: string;
   date: Date | null;
   note: string | null;
+  format: TournamentFormat | null;
+  scheduleGeneratedAt: Date | null;
+  config: unknown;
   brackets: {
     order: number;
-    groupAMember: { name: string } | null;
-    groupBMember: { name: string } | null;
+    groupAMemberId: string | null;
+    groupBMemberId: string | null;
+    groupAMember: { id: string; name: string } | null;
+    groupBMember: { id: string; name: string } | null;
     practiceGroupName: string | null;
     practiceGroupMembers: string | null;
   }[];
+  matches: TournamentMatchRow[];
   members: {
     id: string;
     shareCost: number;
@@ -65,7 +86,7 @@ type Tournament = {
     additionalNote: string | null;
     amount: number;
     countsToBudget: boolean;
-    member: { id: string; name: string };
+    member: { id: string; name: string; rank: MemberRank | null; gender: MemberGender | null };
   }[];
   expenses: {
     id: string;
@@ -141,64 +162,6 @@ function TournamentExpensesTable({
                 </TableRow>
               ))
             )}
-          </TableBody>
-        </Table>
-      }
-    />
-  );
-}
-
-function TournamentBracketsTable({
-  brackets,
-}: {
-  brackets: Tournament["brackets"];
-}) {
-  return (
-    <ResponsiveDataView
-      mobile={
-        <MobileDataList>
-          {brackets.map((row) => (
-            <MobileDataCard key={row.order} title={`Bảng ${row.order}`}>
-              <MobileDataFields>
-                <MobileDataField label="Bảng A">
-                  {row.groupAMember?.name ?? "—"}
-                </MobileDataField>
-                <MobileDataField label="Bảng B">
-                  {row.groupBMember?.name ?? "—"}
-                </MobileDataField>
-                <MobileDataField label="Nhóm tập" fullWidth>
-                  {row.practiceGroupName
-                    ? `${row.practiceGroupName}: ${row.practiceGroupMembers ?? ""}`
-                    : "—"}
-                </MobileDataField>
-              </MobileDataFields>
-            </MobileDataCard>
-          ))}
-        </MobileDataList>
-      }
-      desktop={
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>STT</TableHead>
-              <TableHead>Bảng A</TableHead>
-              <TableHead>Bảng B</TableHead>
-              <TableHead>Nhóm tập</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {brackets.map((row) => (
-              <TableRow key={row.order}>
-                <TableCell>{row.order}</TableCell>
-                <TableCell>{row.groupAMember?.name ?? "—"}</TableCell>
-                <TableCell>{row.groupBMember?.name ?? "—"}</TableCell>
-                <TableCell>
-                  {row.practiceGroupName
-                    ? `${row.practiceGroupName}: ${row.practiceGroupMembers ?? ""}`
-                    : "—"}
-                </TableCell>
-              </TableRow>
-            ))}
           </TableBody>
         </Table>
       }
@@ -407,10 +370,66 @@ export function TournamentsView({
                 </p>
               )}
 
-              <div>
-                <h3 className="mb-2 font-semibold">Phân bảng A / B</h3>
-                <TournamentBracketsTable brackets={tournament.brackets} />
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="font-semibold">Lịch thi đấu</h3>
+                  {tournament.format && (
+                    <span className="text-sm text-[var(--color-muted-foreground)]">
+                      {TOURNAMENT_FORMAT_LABELS[tournament.format]}
+                      {tournament.scheduleGeneratedAt &&
+                        ` · ${formatDate(tournament.scheduleGeneratedAt)}`}
+                    </span>
+                  )}
+                </div>
+                {isAdmin && (
+                  <TournamentScheduleGenerator
+                    clubId={clubId}
+                    tournamentId={tournament.id}
+                    participants={tournament.members.map((tm) => ({
+                      memberId: tm.member.id,
+                      name: tm.member.name,
+                      rank: tm.member.rank,
+                      gender: tm.member.gender,
+                    }))}
+                    hasSchedule={tournament.matches.length > 0}
+                    format={tournament.format}
+                  />
+                )}
+                <TournamentMatchesTable
+                  clubId={clubId}
+                  tournamentId={tournament.id}
+                  matches={tournament.matches}
+                  members={tournament.members.map((tm) => ({
+                    id: tm.member.id,
+                    name: tm.member.name,
+                  }))}
+                  config={
+                    tournament.config
+                      ? (tournament.config as TournamentScheduleConfig)
+                      : null
+                  }
+                  isAdmin={isAdmin}
+                />
               </div>
+
+              {tournament.format === "AB_PAIRS" && (
+                <TournamentBracketsEditor
+                  clubId={clubId}
+                  tournamentId={tournament.id}
+                  config={
+                    tournament.config
+                      ? (tournament.config as TournamentScheduleConfig)
+                      : null
+                  }
+                  participants={tournament.members.map((tm) => ({
+                    memberId: tm.member.id,
+                    name: tm.member.name,
+                    rank: tm.member.rank,
+                    gender: tm.member.gender,
+                  }))}
+                  isAdmin={isAdmin}
+                />
+              )}
 
               {isEditing ? (
                 <MutationForm
